@@ -35,7 +35,7 @@ class Wombat(om.Group):
 
 
 class WombatWisdem(om.ExplicitComponent):
-    """ORBIT-WISDEM Fixed Substructure API."""
+    """WOMBAT-WISDEM Fixed Substructure API."""
 
     def initialize(self):
         """Initialize the API."""
@@ -74,10 +74,10 @@ class WombatWisdem(om.ExplicitComponent):
             desc="Sum of system and installation capex",
         )
 
-    def compile_orbit_config_file(
+    def compile_wombat_config_file(
         self, inputs, outputs, discrete_inputs, discrete_outputs,
     ):
-        """Compiles the ORBIT configuration dictionary."""
+        """Compiles the WOMBAT configuration dictionary."""
 
         config = {}
 
@@ -87,14 +87,12 @@ class WombatWisdem(om.ExplicitComponent):
     def compute(self, inputs, outputs, discrete_inputs, discrete_outputs):
         """Creates and runs the project, then gathers the results."""
 
-        config = self.compile_orbit_config_file(
+        config = self.compile_wombat_config_file(
             inputs, outputs, discrete_inputs, discrete_outputs,
         )
 
-        project = ProjectManager(config)
+        project = Simulation(config)
         project.run()
 
-        # The ORBIT version of total_capex includes turbine capex, so we do our own sum of
-        # the parts here that wisdem doesn't account for
         capacity_kW = 1e3 * inputs["turbine_rating"] * discrete_inputs["number_of_turbines"]
         outputs["bos_capex"] = project.bos_capex
