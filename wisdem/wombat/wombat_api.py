@@ -68,10 +68,34 @@ class WombatWisdem(om.ExplicitComponent):
 
         # Outputs
         self.add_output(
-            "bos_capex",
+            "total_opex",
             0.0,
             units="USD",
-            desc="Sum of system and installation capex",
+            desc=(
+                "Total operational expenditure (fixed costs, port fees, labor, servicing"
+                " equipment, and materials)"
+            ),
+        )
+        self.add_output(
+            "total_opex_kw",
+            0.0,
+            units="USD",
+            desc=(
+                "Total operational expenditure (fixed costs, port fees, labor, servicing"
+                " equipment, and materials) per kW"
+            ),
+        )
+        self.add_output(
+            "materials_opex",
+            0.0,
+            units="USD",
+            desc="Cost of all replaced and consumable materials for repairs and servicing",
+        )
+        self.add_output(
+            "equipment_opex",
+            0.0,
+            units="USD",
+            desc="Direct cost for renting and operating servicing equipment",
         )
 
     def compile_wombat_config_file(
@@ -91,8 +115,15 @@ class WombatWisdem(om.ExplicitComponent):
             inputs, outputs, discrete_inputs, discrete_outputs,
         )
 
-        project = Simulation(config)
-        project.run()
+        sim = Simulation(config)
+        sim.run()
+        metrics = sim.metrics
 
-        capacity_kW = 1e3 * inputs["turbine_rating"] * discrete_inputs["number_of_turbines"]
-        outputs["bos_capex"] = project.bos_capex
+        frequency = "project"
+        capacity_kW = sim.project_capacity * 1000
+        opex = metrics.opex(frequency, by_category=True)
+        outputs["total_opex"] = opex.OpEx
+        outputs["total_opex_kw"] = outputs["total_opex"] / capacity_kw
+        outputs["materials_opex"] = opex.materials_cost
+        outputs["equipment_opex"] = opex.equipment_cost
+        # TODO: total_labor_cost, fixed costs, port_fees
