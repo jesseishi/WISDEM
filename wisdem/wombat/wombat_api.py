@@ -13,22 +13,18 @@ class Wombat(om.Group):
 
     def initialize(self):
         """Initializes the API connections."""
-        # self.options.declare("floating", default=False)
-        # self.options.declare("jacket", default=False)
-        # self.options.declare("jacket_legs", default=0)
-        ...
+        self.options.declare("scenario", default=None)  # NOTE: config file without the extension
+        self.options.declare("library_path", default="default")  # TODO: default libraries coming soon
+
+        # TODO: Should the random seed or generator be provided to the interface?
 
     def setup(self):
         """Define all input variables from all models."""
-        self.set_input_defaults("wtiv", "example_wtiv")
-        self.set_input_defaults("boem_review_cost", 0.0, units="USD")
-
         self.add_subsystem(
             "wombat",
             WombatWisdem(
-                # floating=self.options["floating"],
-                # jacket=self.options["jacket"],
-                # jacket_legs=self.options["jacket_legs"],
+                scenario=self.options["scenario"],
+                libary_path=self.options["library_path"],
             ),
             promotes=["*"],
         )
@@ -39,13 +35,13 @@ class WombatWisdem(om.ExplicitComponent):
 
     def initialize(self):
         """Initialize the API."""
-        # self.options.declare("floating", default=False)
-        # self.options.declare("jacket", default=False)
-        # self.options.declare("jacket_legs", default=0)
-        ...
+        self.options.declare("scenario", default=None)
+        self.options.declare("library_path", default="default")
 
     def setup(self):
         """Define all the inputs."""
+
+        # TODO: need to ensure a passthrough for customized layouts (ORBIT or Ard integration)
         
         self.add_discrete_input(
             "wtiv",
@@ -98,25 +94,20 @@ class WombatWisdem(om.ExplicitComponent):
             desc="Direct cost for renting and operating servicing equipment",
         )
 
-    def compile_wombat_config_file(
-        self, inputs, outputs, discrete_inputs, discrete_outputs,
-    ):
-        """Compiles the WOMBAT configuration dictionary."""
-
-        config = {}
-
-        self._wombat_config = config
-        return config
-
     def compute(self, inputs, outputs, discrete_inputs, discrete_outputs):
         """Creates and runs the project, then gathers the results."""
 
-        config = self.compile_wombat_config_file(
-            inputs, outputs, discrete_inputs, discrete_outputs,
-        )
+        library_path = self.options["library_path"]
 
-        sim = Simulation(config)
-        sim.run()
+        try:
+            config = Path(self.options["scenario"]).with_suffix(".yaml")
+            sim = Simulation(library_path=library_path, config)
+        except FileNotFoundError:
+            config = config.with_suffix(".yml")
+            sim = Simulation(library_path=library_path, config)
+
+        sim.run(save_metrics_inputs=False, delete_logs=True)
+        sim.env.cleanup()
         metrics = sim.metrics
 
         frequency = "project"
