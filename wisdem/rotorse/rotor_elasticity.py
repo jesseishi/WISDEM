@@ -500,7 +500,7 @@ class RunPreComp(ExplicitComponent):
             if idx_le_precomp != 0:
                 if profile_i_rot_precomp[0, 0] == profile_i_rot_precomp[-1, 0]:
                     idx_s = 1
-                profile_i_rot_precomp = np.row_stack(
+                profile_i_rot_precomp = np.vstack(
                     (profile_i_rot_precomp[idx_le_precomp:], profile_i_rot_precomp[idx_s:idx_le_precomp, :])
                 )
             profile_i_rot_precomp[:, 1] -= profile_i_rot_precomp[np.argmin(profile_i_rot_precomp[:, 0]), 1]
@@ -510,7 +510,7 @@ class RunPreComp(ExplicitComponent):
             profile_i_rot_precomp = profile_i_rot_precomp / max(profile_i_rot_precomp[:, 0])
 
             if profile_i_rot_precomp[-1, 0] != 1.0:
-                profile_i_rot_precomp = np.row_stack((profile_i_rot_precomp, profile_i_rot_precomp[0, :]))
+                profile_i_rot_precomp = np.vstack((profile_i_rot_precomp, profile_i_rot_precomp[0, :]))
 
             # 'web' at trailing edge needed for flatback airfoils
             if (
@@ -867,9 +867,9 @@ class TotalBladeProperties(ExplicitComponent):
 
     def compute(self, inputs, outputs, discrete_inputs, discrete_outputs):
         rhoA_joint = inputs["rhoA"]
-        blade_mass = np.trapz(rhoA_joint, inputs["r"])
-        blade_span_cg = np.trapz(rhoA_joint * inputs["r"], inputs["r"]) / blade_mass
-        blade_moment_of_inertia = np.trapz(rhoA_joint * inputs["r"] ** 2.0, inputs["r"])
+        blade_mass = np.trapezoid(rhoA_joint, inputs["r"])
+        blade_span_cg = np.trapezoid(rhoA_joint * inputs["r"], inputs["r"]) / blade_mass
+        blade_moment_of_inertia = np.trapezoid(rhoA_joint * inputs["r"] ** 2.0, inputs["r"])
         # tilt = inputs["uptilt"]
         n_blades = discrete_inputs["n_blades"]
         mass_all_blades = n_blades * blade_mass
