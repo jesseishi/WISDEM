@@ -52,11 +52,58 @@ class WombatWisdem(om.ExplicitComponent):
         """Initialize the API."""
         self.options.declare("scenario", default=None)
         self.options.declare("library_path", default="default")
+        self.options.declare("config", default=None)
+
+    def load_scenario_config(self) -> dict:
+        scenario = self.options["scenario"]
+        if scenario == "land":
+            raise NotImplementedError("No default land-based data is available for WOMBAT.")
+        
+        if scenario == "fixed":
+            config = load_yaml(DEFAULT / "project/config", "osw_fixed.yaml")
+                
+            config["vessels"] = {
+                "ctv": load_yaml(DEFAULT / "vessels", "ctv.yaml"),
+                "hlv": load_yaml(DEFAULT / "vessels", "hlv.yaml"),
+                "cab": load_yaml(DEFAULT / "vessels", "cab.yaml"),
+                "dsv": load_yaml(DEFAULT / "vessels", "dsv.yaml"),
+            }
+            config["servicing_equipment"] = [[3, "ctv"], "cab", "dsv", "hlv"]
+            config["fixed_costs"] = load_yaml(DEFAULT / "project/config", "osw_fixed_bottom_costs.yaml")
+            config["substations"] = {"base_substation": load_yaml(DEFAULT / "substations", "fixed_offshore_substation.yaml")}
+            config["cables"] = {
+                "base_array": load_yaml(DEFAULT / "cables", "array_osw.yaml"),
+                "base_export": load_yaml(DEFAULT / "cables", "export_osw.yaml"),
+            }
+            config["turbines"] = {"base_turbine": load_yaml(DEFAULT / "turbines", "fixed_osw_turbine.yaml")}
+            return config
+        
+        if scenario == "floating":
+            config = load_yaml(DEFAULT / "project/config", "osw_floating.yaml")
+            config["vessels"] = {
+                "ctv": load_yaml(DEFAULT / "vessels", "ctv.yaml"),
+                "cab": load_yaml(DEFAULT / "vessels", "cab.yaml"),
+                "dsv": load_yaml(DEFAULT / "vessels", "dsv.yaml"),
+                "tugboat": load_yaml(DEFAULT / "vessels", "tugboat.yaml"),
+            }
+            config["servicing_equipment"] = [[3, "ctv"], "cab", "dsv"]
+            config["fixed_costs"] = load_yaml(DEFAULT / "project/config", "osw_floating_costs.yaml")
+            config["substations"] = {"base_substation": load_yaml(DEFAULT / "substations", "floating_offshore_substation.yaml")}
+            config["cables"] = {
+                "base_array": load_yaml(DEFAULT / "cables", "array_osw.yaml"),
+                "base_export": load_yaml(DEFAULT / "cables", "export_osw.yaml"),
+            }
+            config["turbines"] = {"base_turbine": load_yaml(DEFAULT / "turbines", "floating_osw_turbine.yaml")}
+            config["port"] = load_yaml(DEFAULT / "project/port", "base_port.yaml")
+            config["port"]["tugboats"] = [2, "tugboat"]
+            return config
 
     def setup(self):
         """Define all the inputs."""
 
         # TODO: need to ensure a passthrough for customized layouts (ORBIT or Ard integration)
+        base_config = self.load_scenario_config()
+        self.add_discrete_input("config", base_config, desc="Base configuration dictionary.")
 
         self.add_discrete_input("name", "wisdem-wombat", desc="Name of the simulation")
         self.add_discrete_input("weather", None, units="")  # TODO: load default file?
@@ -132,87 +179,31 @@ class WombatWisdem(om.ExplicitComponent):
             desc="Direct cost for renting and operating servicing equipment",
         )
 
-    def _compile_scenario_inputs(self, inputs, discrete_inputs) -> dict:
-        scenario = self.options["scenario"]
-        if scenario == "land":
-            additional_config = {
-                "vessels": {},
-                "service_equipment": {},
-                "fixed_costs": {},
-                "substations": {},
-                "cables": {},
-            }
-            raise NotImplementedError("No default land-based data is available for WOMBAT.")
-        
-        if scenario == "fixed":
-            additional_config = {
-                "vessels": {
-                    "ctv": load_yaml(DEFAULT / "vessels", "ctv.yaml"),
-                    "hlv": load_yaml(DEFAULT / "vessels", "hlv.yaml"),
-                    "cab": load_yaml(DEFAULT / "vessels", "cab.yaml"),
-                    "dsv": load_yaml(DEFAULT / "vessels", "dsv.yaml"),
-                },
-                "service_equipment": [["ctv", 3], "hlv", "cab", "dsv"],
-                "fixed_costs": {},  # TODO: udpate when COWER data is updated
-                "substations": {
-                    "base_substation": load_yaml(DEFAULT / "substations", "fixed_offshore_substation.yaml")
-                },
-                "cables": {
-                    "base_array": load_yaml(DEFAULT / "cables", "array_osw.yaml"),
-                    "base_export": load_yaml(DEFAULT / "cables", "export_osw.yaml"),
-                },
-            }
-            return additional_confg
-        
-        if scenario == "floating":
-            additional_config = {
-                "vessels": {
-                    "ctv": load_yaml(DEFAULT / "vessels", "ctv.yaml"),
-                    "cab": load_yaml(DEFAULT / "vessels", "cab.yaml"),
-                    "dsv": load_yaml(DEFAULT / "vessels", "dsv.yaml"),
-                    "tug1": load_yaml(DEFAULT / "vessels", "tugboat1.yaml"),
-                    "tug2": load_yaml(DEFAULT / "vessels", "tugboat2.yaml"),
-                },
-                "service_equipment": [["ctv", 3], "cab", "dsv"],
-                "fixed_costs": {},  # TODO: udpate when COWER data is updated
-                "substations": {
-                    "base_substation": load_yaml(DEFAULT / "substations", "floating_offshore_substation.yaml")
-                },
-                "cables": {
-                    "base_array": load_yaml(DEFAULT / "cables", "array_osw.yaml"),
-                    "base_export": load_yaml(DEFAULT / "cables", "export_osw.yaml"),
-                },
-                "port": load_yaml(DEFAULT / "port", "morro_bay_port.yaml"),
-            }
-            return additional_confg
-
     def compile_inputs(self, inputs, outputs, discrete_inputs, discrete_outputs):
         """Creates the WOMBAT configuration file."""
         
-        config = {
-            "name": discrete_inputs[""],
-            # "layout": inputs[""],
-            # "layout_coords": discrete_inputs[""],
-            # "weather": inputs[""],
-            "workday_start": discrete_inputs[""],
-            "workday_end": discrete_inputs[""],
-            "inflation_rate": inputs[""],
-            "project_capacity": inputs[""],
-            "start_year": inputs[""],
-            "end_year": inputs[""],
-            "port_distance": inputs[""],
-            "maintenance_start": inputs[""],
-            "non_operational_start": inputs[""],
-            "non_operational_end": inputs[""],
-            "reduced_speed_start": inputs[""],
-            "reduced_speed_end": inputs[""],
-            "reduced_speed": inputs[""],
-            "random_seed": inputs[""],
-            "random_generator": inputs[""],
-            "cables": inputs[""],
-            "turbines": inputs[""],
-            **self._compile_scenario_inputs(inputs, discrete_inputs)
-        }
+        config = inputs["config"]
+        config["name"] = discrete_inputs["name"]
+        # config["layout"] = inputs["layout"]
+        # config["layout_coords"] = discrete_inputs["layout_coords"]
+        # config["weather"] = inputs["weather"]
+        config["workday_start"] = discrete_inputs["workday_start"]
+        config["workday_end"] = discrete_inputs["workday_end"]
+        config["inflation_rate"] = inputs["inflation_rate"]
+        config["project_capacity"] = inputs["project_capacity"]
+        config["start_year"] = inputs["start_year"]
+        config["end_year"] = inputs["end_year"]
+        config["port_distance"] = inputs["port_distance"]
+        config["maintenance_start"] = inputs["maintenance_start"]
+        config["non_operational_start"] = inputs["non_operational_start"]
+        config["non_operational_end"] = inputs["non_operational_end"]
+        config["reduced_speed_start"] = inputs["reduced_speed_start"]
+        config["reduced_speed_end"] = inputs["reduced_speed_end"]
+        config["reduced_speed"] = inputs["reduced_speed"]
+        config["random_seed"] = inputs["random_seed"]
+        config["random_generator"] = inputs["random_generator"]
+        config["cables"] = inputs["cables"]
+        config["turbines"] = inputs["turbines"]
 
     def compute(self, inputs, outputs, discrete_inputs, discrete_outputs):
         """Creates and runs the project, then gathers the results."""
