@@ -150,8 +150,8 @@ class WombatWisdem(om.ExplicitComponent):
         # Turbine modifications
         # All defaults are -1 to indicate the WOMBAT defaults will be used
         self.add_input("power_converter_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
-        self.add_input("power_converter_minor_repair_time", units="hours", desc="Number of hours to complete the repair")
-        self.add_input("power_converter_minor_repair_materials", units="$", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
+        self.add_input("power_converter_minor_repair_time", -1, units="hours", desc="Number of hours to complete the repair")
+        self.add_input("power_converter_minor_repair_materials", 1, units="$", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
 
 
         # Outputs
