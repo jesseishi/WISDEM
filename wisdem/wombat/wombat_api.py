@@ -15,6 +15,7 @@ class Wombat(om.Group):
     def initialize(self):
         """Initializes the API connections."""
         self.options.declare("scenario", default=None)  # NOTE: config file without the extension
+        self.options.declare("config", default=None)
         
         # TODO: Should the random seed or generator be provided to the interface?
 
@@ -145,6 +146,12 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_discrete_input("substations", None, units="")  # TODO: load default file?
         self.add_discrete_input("turbines", None, units="")  # TODO: load default file?
         self.add_discrete_input("vessels", None, units="")  # TODO: load default file?
+
+        # Turbine modifications
+        # All defaults are -1 to indicate the WOMBAT defaults will be used
+        self.add_input("power_converter_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
+        self.add_input("power_converter_minor_repair_time", units="hours", desc="Number of hours to complete the repair")
+        self.add_input("power_converter_minor_repair_materials", units="$", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
 
 
         # Outputs
