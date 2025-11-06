@@ -4,7 +4,6 @@
 from warnings import warn
 
 import openmdao.api as om
-
 from wombat import Simulation
 from wombat.core.library import DEFAULT, load_yaml
 
@@ -20,10 +19,13 @@ class Wombat(om.Group):
         # TODO: Should the random seed or generator be provided to the interface?
 
         self.set_input_defaults("name", "wisdem-wombat")
-        self.set_input_defaults("weather", None, units="")  # TODO: load default file?
+        self.set_input_defaults("weather", None, units="unitless")  # TODO: load default file?
         self.set_input_defaults("workday_start", 6, units="h")
         self.set_input_defaults("workday_end", 6, units="h")
         self.set_input_defaults("inflation_rate", 0, units="percent")
+        
+        self.set_discrete_input_defaults("layout", None, units="unitless")
+        self.set_discrete_input_defaults("random_seed", 42, units="unitless")
 
         # Fixed costs
         # TODO: update for expected, most common scenario
@@ -127,7 +129,7 @@ class WombatWisdem(om.ExplicitComponent):
         
         # Optional primary inputs
         self.add_input("port_distance", None, units="km")
-        self.add_discrete_input("layout_coords", None, units="")  # TODO: load default file?
+        self.add_discrete_input("layout_coords", "distance", units="unitless")
         self.add_discrete_input("fixed_costs", None, units="")  # TODO: load default file?
         self.add_discrete_input("port", None, units="")  # TODO: load default file?
         self.add_discrete_input("start_year", None, units="yr")
@@ -279,14 +281,24 @@ class WombatWisdem(om.ExplicitComponent):
             desc="Direct cost for renting and operating servicing equipment",
         )
 
+    def create_layout(self, inputs, outputs, discrete_inputs, discrete_outputs):
+        """Creates the WOMBAT layout DataFrame from the ORBIT outputs."""
+        layout = discrete_outputs["layout"]
+        layout[["type", "subassembly", "upstream_cable"]] = ["turbine", "base_turbine", "base_array"]
+        layout.loc[
+            layout.id.isin(layout.substation_id),
+            ["type", "subassembly", "upstream_cable"]
+        ] = ["substation", "base_substation", "base_export"]
+        return layout
+
     def compile_inputs(self, inputs, outputs, discrete_inputs, discrete_outputs):
         """Creates the WOMBAT configuration file."""
         
         config = inputs["config"]
         config["name"] = discrete_inputs["name"]
-        # config["layout"] = inputs["layout"]
-        # config["layout_coords"] = discrete_inputs["layout_coords"]
-        # config["weather"] = inputs["weather"]
+        config["layout"] = create_layout(inputs, outputs, discrete_inputs, discrete_outputs)
+        config["layout_coords"] = discrete_inputs["layout_coords"]
+        config["weather"] = discrete_inputs["weather"]
         config["workday_start"] = discrete_inputs["workday_start"]
         config["workday_end"] = discrete_inputs["workday_end"]
         config["inflation_rate"] = inputs["inflation_rate"]
@@ -510,4 +522,4 @@ class WombatWisdem(om.ExplicitComponent):
         outputs["total_opex_kw"] = outputs["total_opex"] / capacity_kw
         outputs["materials_opex"] = opex.materials_cost
         outputs["equipment_opex"] = opex.equipment_cost
-        # TODO: total_labor_cost, fixed costs, port_fees
+        # TODO: add all outputs; total_labor_cost, fixed costs, port_fees

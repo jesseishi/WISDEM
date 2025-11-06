@@ -498,6 +498,12 @@ class OrbitWisdem(om.ExplicitComponent):
             units="USD",
             desc="Total balance of system installation cost.",
         )
+        self.add_discrete_output(
+            "layout",
+            pd.DataFrame(),
+            units=unitless,
+            desc="Farm layout to be used by WOMBAT.",
+        )
 
     def compile_orbit_config_file(
         self, inputs, outputs, discrete_inputs, discrete_outputs,
@@ -778,3 +784,4 @@ class OrbitWisdem(om.ExplicitComponent):
         outputs["total_capex_kW"] = outputs["total_capex"] / capacity_kW
         outputs["installation_time"] = project.installation_time
         outputs["installation_capex"] = project.installation_capex
+        discrete_outputs["layout"] = project.phases["ArraySystemDesign"].create_layout_df()
