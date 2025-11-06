@@ -490,20 +490,17 @@ class WombatWisdem(om.ExplicitComponent):
             if (val := inputs["mooring_lines_buoyancy_module_replacement_replacement_materials"]) > -1:
                 config["turbines"]["base_turbine"]["mooring_lines_buoyancy_module_replacement"][3]["materials"] = val
 
+        return config
+
     def compute(self, inputs, outputs, discrete_inputs, discrete_outputs):
         """Creates and runs the project, then gathers the results."""
 
         library_path = self.options["library_path"]
+        config = self.compile_inputs(inputs, outputs, discrete_inputs, discrete_outputs)
 
-        try:
-            config = Path(self.options["scenario"]).with_suffix(".yaml")
-            sim = Simulation(library_path=library_path, config)
-        except FileNotFoundError:
-            config = config.with_suffix(".yml")
-            sim = Simulation(library_path=library_path, config)
+        sim = Simulation(library_path=library_path, config)
 
         sim.run(save_metrics_inputs=False, delete_logs=True)
-        sim.env.cleanup()
         metrics = sim.metrics
 
         frequency = "project"
