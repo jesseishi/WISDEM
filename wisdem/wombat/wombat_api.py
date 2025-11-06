@@ -520,6 +520,34 @@ class WombatWisdem(om.ExplicitComponent):
         opex = metrics.opex(frequency, by_category=True)
         outputs["total_opex"] = opex.OpEx
         outputs["total_opex_kw"] = outputs["total_opex"] / capacity_kw
-        outputs["materials_opex"] = opex.materials_cost
+        
+        outputs["time_availability"] = metrics.time_based_availability(frequency="project", by="windfarm").squeeze()
+        outputs["energy_availability"] = metrics.production_based_availability(frequency="project", by="windfarm").squeeze()
+        outputs["net_capacity_factor"] = metrics.capacity_factor(which="net", frequency="project", by="windfarm").squeeze()
+        outputs["gross_capacity_factor"] = metrics.capacity_factor(which="gross", frequency="project", by="windfarm").squeeze()
+        outputs["scheduled_task_completion_rate"] = metrics.task_completion_rate(which="scheduled", frequency="project").squeeze()
+        outputs["unscheduled_task_completion_rate"] = metrics.task_completion_rate(which="unscheduled", frequency="project").squeeze()
+        outputs["combined_task_completion_rate"] = metrics.task_completion_rate(which="both", frequency="project").squeeze()
+        outputs["total_equipment_cost"] = metrics.equipment_costs(frequency="project", by_equipment=False).squeeze()
+        
+        # TODO: Do we need individual vessel/vehicle breakdowns?
+        # TODO: are dataframe outputs ok, or different type?
+        outputs["equipment_cost_breakdown"] = metrics.equipment_costs(frequency="project", by_equipment=False)
+        outputs["equipment_utilization_rate"] =  metrics.service_equipment_utilization(frequency="project")
+        outputs["equipment_dispatch_summary"] = metrics..dispatch_summary(frequency="project")
+        outputs["vessel_crew_hours_at_sea"] = metrics.vessel_crew_hours_at_sea(frequency="project", by_equipment=True).squeeze()
+        
+        outputs["vessel_crew_hours_at_sea"] = metrics.vessel_crew_hours_at_sea(frequency="project", by_equipment=False).squeeze()
+        outputs["total_tows"] = metrics.number_of_tows(frequency="project").squeeze()
+        outputs["direct_labor"] = metrics..labor_costs(frequency="project", by_type=False).squeeze()
+        outputs["materials_by_subassembly"] = metrics.component_costs(frequency="project", by_category=False, by_action=False)  # TODO: are dataframe outputs ok, or different type?
+        outputs["total_materials"] = outputs["materials_by_subassembly"].values.sum()
+        
+        fixed_costs = metrics.project_fixed_costs(frequency="project", resolution="medium")
+        outputs["indirect_labor"] = fixed_costs[["labor"]].squeeze()
+        outputs["total_fixed_costs"] = fixed_costs.values.sum()
+        
         outputs["equipment_opex"] = opex.equipment_cost
-        # TODO: add all outputs; total_labor_cost, fixed costs, port_fees
+        
+        # NOTE: emissions need assumptions, so it's excluded
+        # TODO: process times, request summary, power production, NPV (requires discount rate and offtake)
