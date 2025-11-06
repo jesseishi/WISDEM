@@ -68,6 +68,7 @@ dependencies = [
   "sortedcontainers",
   "statsmodels",
   "windIO",
+  "wombat>=0.13"
 ]
 
 # List additional groups of dependencies here (e.g. development
