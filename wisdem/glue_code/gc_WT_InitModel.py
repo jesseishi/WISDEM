@@ -96,6 +96,12 @@ def yaml2openmdao(wt_opt, modeling_options, wt_init, opt_options):
     else:
         bos = {}
 
+    if modeling_options["flags"]["opex"]:
+        opex = modeling_options["WISDEM"]["OpEx"]
+        wt_opt = assign_opex_values(wt_opt, opex)
+    else:
+        opex = {}
+
     if modeling_options["flags"]["costs"]:
         costs = modeling_options["WISDEM"]["LCOE"]
         wt_opt = assign_costs_values(wt_opt, costs)
@@ -1458,6 +1464,12 @@ def assign_bos_values(wt_opt, bos, offshore):
         wt_opt["bos.boem_review_cost"] = bos["review_cost"]
     else:
         wt_opt["bos.interconnect_voltage"] = bos["interconnect_voltage"]
+
+    return wt_opt
+
+
+def assign_opex_values(wt_opt, opex):
+    wt_opt["opex.power_converter_minor_repair_scale"] = opex["power_converter_minor_repair_scale"]
 
     return wt_opt
 

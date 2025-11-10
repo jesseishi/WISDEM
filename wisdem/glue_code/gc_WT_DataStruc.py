@@ -308,6 +308,11 @@ class WindTurbineOntologyOpenMDAO(om.Group):
             else:
                 bos_ivc.add_output("interconnect_voltage", 130.0, units="kV")
 
+        # Operation and maintenance inputs
+        if modeling_options["flags"]["opex"]:
+            opex_ivc = self.add_subsystem("opex", om.IndepVarComp())
+            opex_ivc.add_output("power_converter_minor_repair_scale", 2.959, desc="Scale factor for minor repairs of power converter")
+
         # Cost analysis inputs
         if modeling_options["flags"]["costs"]:
             costs_ivc = self.add_subsystem("costs", om.IndepVarComp())

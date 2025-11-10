@@ -14,7 +14,7 @@ from wisdem.commonse.turbine_constraints import TurbineConstraints
 from wisdem.plant_financese.plant_finance import PlantFinance
 from wisdem.landbosse.landbosse_omdao.landbosse import LandBOSSE
 from wisdem.orbit.orbit_api import Orbit
-
+from wisdem.wombat.wombat_api import Wombat
 
 class WT_RNTA_Prop(om.Group):
     # Openmdao group to compute most of the mass properties of the components
@@ -951,6 +951,9 @@ class WindPark(om.Group):
                 "outputs_2_screen", Outputs_2_Screen(verbosity=modeling_options["General"]["verbosity"])
             )
 
+        if modeling_options["flags"]["opex"]:
+            self.add_subsystem("wombat", Wombat())
+
         # BOS inputs
         if modeling_options["WISDEM"]["BOS"]["flag"]:
             if modeling_options["flags"]["offshore"]:
@@ -1036,6 +1039,10 @@ class WindPark(om.Group):
                 self.connect("bos.distance_to_substation", "landbosse.trench_len_to_substation_km")
                 self.connect("bos.distance_to_interconnection", "landbosse.distance_to_interconnect_mi")
                 self.connect("bos.interconnect_voltage", "landbosse.interconnect_voltage_kV")
+
+        # OPEX inputs
+        if modeling_options["flags"]["opex"]:
+            self.connect("opex.power_converter_minor_repair_scale", "wombat.power_converter_minor_repair_scale")
 
         # Inputs to plantfinancese from wt group
         if modeling_options["flags"]["blade"]:

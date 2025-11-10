@@ -68,6 +68,7 @@ class WindTurbineOntologyPython(object):
                 flags[i] = False
         flags["hub"] = flags["drivetrain"] = flags["hub"] or flags["drivetrain"]  # Hub and drivetrain have to go together
         flags["bos"] = self.modeling_options["WISDEM"]["BOS"]["flag"]
+        flags["opex"] = self.modeling_options["WISDEM"]["OpEx"]["flag"]
         flags["environment"] = "Environment" in self.modeling_options["WISDEM"]
         flags["costs"] = self.modeling_options["WISDEM"]["LCOE"]["flag"]
         flags["offshore"] = (flags["floating"] or flags["monopile"] or flags["jacket"])

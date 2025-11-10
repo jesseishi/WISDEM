@@ -510,7 +510,7 @@ class WombatWisdem(om.ExplicitComponent):
         library_path = self.options["library_path"]
         config = self.compile_inputs(inputs, outputs, discrete_inputs, discrete_outputs)
 
-        sim = Simulation(library_path=library_path, config)
+        sim = Simulation(library_path=library_path, config=config)
 
         sim.run(save_metrics_inputs=False, delete_logs=True)
         metrics = sim.metrics
@@ -519,7 +519,7 @@ class WombatWisdem(om.ExplicitComponent):
         capacity_kW = sim.project_capacity * 1000
         opex = metrics.opex(frequency, by_category=True)
         outputs["total_opex"] = opex.OpEx
-        outputs["total_opex_kw"] = outputs["total_opex"] / capacity_kw
+        outputs["total_opex_kw"] = outputs["total_opex"] / capacity_kW
         
         outputs["time_availability"] = metrics.time_based_availability(frequency="project", by="windfarm").squeeze()
         outputs["energy_availability"] = metrics.production_based_availability(frequency="project", by="windfarm").squeeze()
@@ -534,12 +534,12 @@ class WombatWisdem(om.ExplicitComponent):
         # TODO: are dataframe outputs ok, or different type?
         outputs["equipment_cost_breakdown"] = metrics.equipment_costs(frequency="project", by_equipment=False)
         outputs["equipment_utilization_rate"] =  metrics.service_equipment_utilization(frequency="project")
-        outputs["equipment_dispatch_summary"] = metrics..dispatch_summary(frequency="project")
+        outputs["equipment_dispatch_summary"] = metrics.dispatch_summary(frequency="project")
         outputs["vessel_crew_hours_at_sea"] = metrics.vessel_crew_hours_at_sea(frequency="project", by_equipment=True).squeeze()
         
         outputs["vessel_crew_hours_at_sea"] = metrics.vessel_crew_hours_at_sea(frequency="project", by_equipment=False).squeeze()
         outputs["total_tows"] = metrics.number_of_tows(frequency="project").squeeze()
-        outputs["direct_labor"] = metrics..labor_costs(frequency="project", by_type=False).squeeze()
+        outputs["direct_labor"] = metrics.labor_costs(frequency="project", by_type=False).squeeze()
         outputs["materials_by_subassembly"] = metrics.component_costs(frequency="project", by_category=False, by_action=False)  # TODO: are dataframe outputs ok, or different type?
         outputs["total_materials"] = outputs["materials_by_subassembly"].values.sum()
         

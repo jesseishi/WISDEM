@@ -467,6 +467,19 @@ properties:
                         minimum: 0
                         maximum: 1.e+9
                         default: 2.5e5
+            OpEx:
+                type: object
+                default: {}
+                properties:
+                    flag: *flag
+                    power_converter_minor_repair_scale:
+                        type: number
+                        description: Scale factor for minor repairs of power converter
+                        units: dimensionless
+                        minimum: 0.0
+                        maximum: 1E+3
+                        default: 2.959
+
             FloatingSE:
                 type: object
                 default: {}
