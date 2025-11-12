@@ -562,42 +562,42 @@ properties:
                         units: unitless
                         minimum: "01/01"
                         maximum: "12/31"
-                        default: None
+                        default: "none"
                     non_operational_start:
                         type: number
                         description: Starting date, in MM/DD format, for an annual period where the site is inaccessible
                         units: string
                         minimum: "01/01"
                         maximum: "12/31"
-                        default: None
+                        default: "none"
                     non_operational_end:
                         type: number
                         description: Ending date, in MM/DD format, for an annual period where the site is inaccessible
                         units: unitless
                         minimum: "01/01"
                         maximum: "12/31"
-                        default: None
+                        default: "none"
                     reduced_speed_start:
                         type: string
                         description: Starting date, in MM/DD format, for an annual period where traveling speed is reduced
                         units: unitless
                         minimum: "01/01"
                         maximum: "12/31"
-                        default: None
+                        default: "none"
                     reduced_speed_end:
                         type: str
                         description: Ending date, in MM/DD format, for an annual period where traveling speed is reduced
                         units: unitless
                         minimum: "01/01"
                         maximum: "12/31"
-                        default: None
+                        default: "none"
                     reduced_speed:
                         type: number
                         description: Reduced speed applied to servicing equipment in the reduced speed period
                         units: km/hr
                         minimum: 1
                         maximum: 100
-                        default: None
+                        default: "none"
 
             FloatingSE:
                 type: object
