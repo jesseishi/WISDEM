@@ -20,21 +20,30 @@ class Wombat(om.Group):
 
         self.set_input_defaults("name", "wisdem-wombat")
         self.set_input_defaults("weather", None, units="unitless")  # TODO: load default file?
-        self.set_input_defaults("workday_start", 6, units="h")
-        self.set_input_defaults("workday_end", 6, units="h")
-        self.set_input_defaults("inflation_rate", 0, units="percent")
+        
+        
+        self.set_input_defaults("years", 20, units="h")
+        self.set_input_defaults("workday_start", 7, units="h")
+        self.set_input_defaults("workday_end", 19, units="h")
+        self.set_input_defaults("port_distance", 50, units="km")
+        self.set_input_defaults("n_ctv", 3, units="unitless")
+        self.set_input_defaults("n_hlv", 1, units="unitless")
+        self.set_input_defaults("n_tugboat", 2, units="unitless")
+        self.set_input_defaults("port_workday_start", 6, units="h")
+        self.set_input_defaults("port_workday_end", 18, units="h")
+        self.set_input_defaults("n_port_crews", 2, units="unitless")
+        self.set_input_defaults("max_port_operations", 2, units="unitless")
+        self.set_input_defaults("repair_port_distance", 116, units="km")
+        self.set_input_defaults("maintenance_start", None, units="unitless")
+        self.set_input_defaults("non_operational_start", None, units="unitless")
+        self.set_input_defaults("non_operational_end", None, units="unitless")
+        self.set_input_defaults("reduced_speed_start", None, units="unitless")
+        self.set_input_defaults("reduced_speed_end", None, units="unitless")
+        self.set_input_defaults("reduced_speed", None, units="km/h")
         
         self.set_discrete_input_defaults("layout", None, units="unitless")
         self.set_discrete_input_defaults("random_seed", 42, units="unitless")
 
-        # Fixed costs
-        # TODO: update for expected, most common scenario
-        # TODO: pathway for fixed, floating, and land-based
-        self.set_input_defaults("labor", 0, units="USD/kW", desc="")
-        self.set_input_defaults("operations_management_administration", 0, units="USD/kW", desc="")
-        self.set_input_defaults("operating_facilities", 0, units="USD/kW", desc="")
-        self.set_input_defaults("insurance", 0, units="USD/kW", desc="")
-        self.set_input_defaults("annual_leases_fees", 0, units="USD/kW", desc="")
 
     def setup(self):
         """Define all input variables from all models."""
@@ -301,19 +310,21 @@ class WombatWisdem(om.ExplicitComponent):
         config["weather"] = discrete_inputs["weather"]
         config["workday_start"] = discrete_inputs["workday_start"]
         config["workday_end"] = discrete_inputs["workday_end"]
-        config["inflation_rate"] = inputs["inflation_rate"]
         config["project_capacity"] = inputs["project_capacity"]
-        config["start_year"] = inputs["start_year"]
-        config["end_year"] = inputs["end_year"]
-        config["port_distance"] = inputs["port_distance"]
-        config["maintenance_start"] = inputs["maintenance_start"]
-        config["non_operational_start"] = inputs["non_operational_start"]
-        config["non_operational_end"] = inputs["non_operational_end"]
-        config["reduced_speed_start"] = inputs["reduced_speed_start"]
-        config["reduced_speed_end"] = inputs["reduced_speed_end"]
-        config["reduced_speed"] = inputs["reduced_speed"]
-        config["random_seed"] = inputs["random_seed"]
-        config["random_generator"] = inputs["random_generator"]
+        
+        # TODO: use base weather and determine start stop
+        config["start_year"] = discrete_inputs["start_year"]
+        config["end_year"] = discrete_inputs["end_year"]
+
+        config["port_distance"] = inputs["equipment_dispatch_distance"]
+        config["maintenance_start"] = discrete_inputs["maintenance_start"]
+        config["non_operational_start"] = discrete_inputs["non_operational_start"]
+        config["non_operational_end"] = discrete_inputs["non_operational_end"]
+        config["reduced_speed_start"] = discrete_inputs["reduced_speed_start"]
+        config["reduced_speed_end"] = discrete_inputs["reduced_speed_end"]
+        config["reduced_speed"] = discrete_inputs["reduced_speed"]
+        config["random_seed"] = discrete_inputs["random_seed"]
+        config["random_generator"] = discrete_inputs["random_generator"]
         config["cables"] = inputs["cables"]
         config["turbines"] = inputs["turbines"]
 

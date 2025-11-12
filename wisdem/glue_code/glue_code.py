@@ -932,8 +932,11 @@ class WindPark(om.Group):
         opt_options = self.options["opt_options"]
 
         self.add_subsystem("wt", WT_RNTA(modeling_options=modeling_options, opt_options=opt_options), promotes=["*"])
-        if modeling_options["WISDEM"]["BOS"]["flag"]:
-            if modeling_options["flags"]["offshore"]:
+        
+        model_bos = model_bos
+        is_offshore = is_offshore
+        if model_bos:
+            if is_offshore:
                 self.add_subsystem(
                     "orbit",
                     Orbit(
@@ -952,11 +955,12 @@ class WindPark(om.Group):
             )
 
         if modeling_options["flags"]["opex"]:
-            self.add_subsystem("wombat", Wombat())
+            if model_bos and is_offshore:
+                self.add_subsystem("wombat", Wombat())
 
         # BOS inputs
-        if modeling_options["WISDEM"]["BOS"]["flag"]:
-            if modeling_options["flags"]["offshore"]:
+        if model_bos:
+            if is_offshore:
                 # Inputs into ORBIT
                 self.connect("configuration.rated_power", "orbit.turbine_rating")
                 self.connect("env.water_depth", "orbit.site_depth")
@@ -1041,8 +1045,30 @@ class WindPark(om.Group):
                 self.connect("bos.interconnect_voltage", "landbosse.interconnect_voltage_kV")
 
         # OPEX inputs
-        if modeling_options["flags"]["opex"]:
-            self.connect("opex.power_converter_minor_repair_scale", "wombat.power_converter_minor_repair_scale")
+        if modeling_options["flags"]["opex"] and model_bos and is_offshore:
+            self.connect("opex.years", "wombat.years")
+            self.connect("opex.workday_start", "wombat.workday_start")
+            self.connect("opex.workday_end", "wombat.workday_end")
+            self.connect("opex.equipment_dispatch_distance", "wombat.port_distance")
+            self.connect("opex.n_ctv", "wombat.n_ctv")
+            self.connect("opex.n_hlv", "wombat.n_hlv")
+            self.connect("opex.n_tugboat", "wombat.n_tugboat")
+            self.connect("opex.port_workday_start", "wombat.port_workday_start")
+            self.connect("opex.port_workday_end", "wombat.port_workday_end")
+            self.connect("opex.n_port_crews", "wombat.n_port_crews")
+            self.connect("opex.max_port_operations", "wombat.max_port_operations")
+            self.connect("opex.repair_port_distance", "wombat.repair_port_distance")
+            self.connect("opex.maintenance_start", "wombat.maintenance_start")
+            self.connect("opex.non_operational_start", "wombat.non_operational_start")
+            self.connect("opex.non_operational_end", "wombat.non_operational_end")
+            self.connect("opex.reduced_speed_start", "wombat.reduced_speed_start")
+            self.connect("opex.reduced_speed_end", "wombat.reduced_speed_end")
+            self.connect("opex.reduced_speed", "wombat.reduced_speed")
+        
+            # TODO: connect the ORBIT layout output to the WOMBAT layout input
+            # TODO: connect the ORBIT capacity output to the WOMBAT capacity input
+            self.connect("orbit.layout", "wombat.layout")
+            self.connect("orbit.capacity", "wombat.project_capacity")
 
         # Inputs to plantfinancese from wt group
         if modeling_options["flags"]["blade"]:
@@ -1050,7 +1076,7 @@ class WindPark(om.Group):
             self.connect("tcc.turbine_cost_kW", "financese.tcc_per_kW")
 
             if modeling_options["flags"]["bos"]:
-                if modeling_options["flags"]["offshore"]:
+                if is_offshore:
                     self.connect("orbit.total_capex_kW", "financese.bos_per_kW")
                 else:
                     self.connect("landbosse.total_capex_kW", "financese.bos_per_kW")
