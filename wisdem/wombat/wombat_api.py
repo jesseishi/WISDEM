@@ -80,7 +80,6 @@ class WombatWisdem(om.ExplicitComponent):
                 "cab": load_yaml(DEFAULT / "vessels", "cab.yaml"),
                 "dsv": load_yaml(DEFAULT / "vessels", "dsv.yaml"),
             }
-            config["servicing_equipment"] = [[3, "ctv"], "cab", "dsv", "hlv"]
             config["fixed_costs"] = load_yaml(DEFAULT / "project/config", "osw_fixed_bottom_costs.yaml")
             config["substations"] = {"base_substation": load_yaml(DEFAULT / "substations", "fixed_offshore_substation.yaml")}
             config["cables"] = {
@@ -98,7 +97,6 @@ class WombatWisdem(om.ExplicitComponent):
                 "dsv": load_yaml(DEFAULT / "vessels", "dsv.yaml"),
                 "tugboat": load_yaml(DEFAULT / "vessels", "tugboat.yaml"),
             }
-            config["servicing_equipment"] = [[3, "ctv"], "cab", "dsv"]
             config["fixed_costs"] = load_yaml(DEFAULT / "project/config", "osw_floating_costs.yaml")
             config["substations"] = {"base_substation": load_yaml(DEFAULT / "substations", "floating_offshore_substation.yaml")}
             config["cables"] = {
@@ -107,7 +105,6 @@ class WombatWisdem(om.ExplicitComponent):
             }
             config["turbines"] = {"base_turbine": load_yaml(DEFAULT / "turbines", "floating_osw_turbine.yaml")}
             config["port"] = load_yaml(DEFAULT / "project/port", "base_port.yaml")
-            config["port"]["tugboats"] = [2, "tugboat"]
             return config
 
     def setup(self):
@@ -303,6 +300,7 @@ class WombatWisdem(om.ExplicitComponent):
     def compile_inputs(self, inputs, outputs, discrete_inputs, discrete_outputs):
         """Creates the WOMBAT configuration file."""
         
+        scenario = self.options["scenario"]
         config = inputs["config"]
         config["name"] = discrete_inputs["name"]
         config["layout"] = create_layout(inputs, outputs, discrete_inputs, discrete_outputs)
@@ -311,11 +309,6 @@ class WombatWisdem(om.ExplicitComponent):
         config["workday_start"] = discrete_inputs["workday_start"]
         config["workday_end"] = discrete_inputs["workday_end"]
         config["project_capacity"] = inputs["project_capacity"]
-        
-        # TODO: use base weather and determine start stop
-        config["start_year"] = discrete_inputs["start_year"]
-        config["end_year"] = discrete_inputs["end_year"]
-
         config["port_distance"] = inputs["equipment_dispatch_distance"]
         config["maintenance_start"] = discrete_inputs["maintenance_start"]
         config["non_operational_start"] = discrete_inputs["non_operational_start"]
@@ -323,6 +316,32 @@ class WombatWisdem(om.ExplicitComponent):
         config["reduced_speed_start"] = discrete_inputs["reduced_speed_start"]
         config["reduced_speed_end"] = discrete_inputs["reduced_speed_end"]
         config["reduced_speed"] = discrete_inputs["reduced_speed"]
+        
+        if scenario == "floating":
+            config["service_equipment"] = [
+                [discrete_inputs["n_ctv"], "ctv"],
+                [1, "dsv"],
+                [1, "cab"],
+            ]
+            config["port"]["tugboats"] = [discrete_inputs["n_tugboats"], "tugboat"]
+            config["port"]["site_distance"] = inputs["repair_port_distance"]
+            config["port"]["workday_start"] = discrete_inputs["port_workday_start"]
+            config["port"]["workday_end"] = discrete_inputs["port_workday_end"]
+            config["port"]["max_operations"] = discrete_inputs["port_max_operations"]
+            config["port"]["n_crews"] = discrete_inputs["n_port_crews"]
+            config["port"]["max_operations"] = discrete_inputs["port_max_operations"]
+        elif scenario == "fixed":
+            config["service_equipment"] = [
+                [discrete_inputs["n_ctv"], "ctv"],
+                [discrete_inputs["n_hlv"], "hlv"],
+                [1, "dsv"],
+                [1, "cab"],
+            ]
+        
+        # TODO: use base weather and determine start stop
+        config["start_year"] = discrete_inputs["start_year"]
+        config["end_year"] = discrete_inputs["end_year"]
+
         config["random_seed"] = discrete_inputs["random_seed"]
         config["random_generator"] = discrete_inputs["random_generator"]
         config["cables"] = inputs["cables"]
@@ -468,7 +487,7 @@ class WombatWisdem(om.ExplicitComponent):
         if (val := inputs["drive_train_replacement_materials"]) > -1:
             config["turbines"]["base_turbine"]["drive_train"][2]["materials"] = val
 
-        if self.options["scenario"] == "floating":
+        if scenario == "floating":
             if (val := inputs["anchor_minor_repair_scale"]) > -1:
                 config["turbines"]["base_turbine"]["anchor"]["failures"][0]["scale"] = val
             if (val := inputs["anchor_minor_repair_time"]) > -1:
