@@ -41,12 +41,12 @@ WISDEM:
         workday_start: 7
         workday_end: 19
         equipment_dispatch_distance: 50
-        number_ctv: 3
-        number_hlv: 1  # TODO: fixed-bottom only
-        number_tugboat: 2  # TODO: floating only
+        n_ctv: 3
+        n_hlv: 1  # TODO: fixed-bottom only
+        n_tugboat: 2  # TODO: floating only
         port_workday_start: 6  # TODO: floating only
         port_workday_end: 18  # TODO: floating only
-        number_port_crews: 2  # TODO: floating only
+        n_port_crews: 2  # TODO: floating only
         max_port_operations: 2  # TODO: floating only
         repair_port_distance: 116  # TODO: floating only
         maintenance_start: None
