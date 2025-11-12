@@ -37,7 +37,31 @@ WISDEM:
         installation_plan_cost: 1e6
     OpEx:
         flag: True
-        power_converter_minor_repair_scale: 2.959
+        years: 20
+        workday_start: 7
+        workday_end: 19
+        equipment_dispatch_distance: 50
+        number_ctv: 3
+        number_hlv: 1  # TODO: fixed-bottom only
+        number_tugboat: 2  # TODO: floating only
+        port_workday_start: 6  # TODO: floating only
+        port_workday_end: 18  # TODO: floating only
+        number_port_crews: 2  # TODO: floating only
+        max_port_operations: 2  # TODO: floating only
+        repair_port_distance: 116  # TODO: floating only
+        maintenance_start: None
+        non_operational_start: None
+        non_operational_end: None
+        reduced_speed_start: None
+        reduced_speed_end: None
+        reduced_speed: None
+        # TODO: random seed or generator input?
+        # NOTES
+        # Fields excluded from user input that will always use the WOMBAT defaults
+        # - project fixed costs
+        # - repair port access and use fees
+        # - number of vessels that aren't related to heavy lift/at-port repair equipment or basic repairs
+        # - at-port repair crew costs
     LCOE:
         flag: True
         wake_loss_factor: 0.15
