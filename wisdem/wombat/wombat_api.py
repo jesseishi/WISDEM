@@ -5,7 +5,7 @@ from warnings import warn
 
 import openmdao.api as om
 from wombat import Simulation
-from wombat.core.library import DEFAULT, load_yaml
+from wombat.core.library import DEFAULT, load_yaml, load_weather
 
 
 class Wombat(om.Group):
@@ -18,10 +18,6 @@ class Wombat(om.Group):
         
         # TODO: Should the random seed or generator be provided to the interface?
 
-        self.set_input_defaults("name", "wisdem-wombat")
-        self.set_input_defaults("weather", None, units="unitless")  # TODO: load default file?
-        
-        
         self.set_input_defaults("years", 20, units="h")
         self.set_input_defaults("workday_start", 7, units="h")
         self.set_input_defaults("workday_end", 19, units="h")
@@ -63,10 +59,10 @@ class WombatWisdem(om.ExplicitComponent):
     def initialize(self):
         """Initialize the API."""
         self.options.declare("scenario", default=None)
-        self.options.declare("library_path", default="default")
         self.options.declare("config", default=None)
 
     def load_scenario_config(self) -> dict:
+        config["name"] = "wisdem_wombat"
         scenario = self.options["scenario"]
         if scenario == "land":
             raise NotImplementedError("No default land-based data is available for WOMBAT.")
@@ -87,6 +83,8 @@ class WombatWisdem(om.ExplicitComponent):
                 "base_export": load_yaml(DEFAULT / "cables", "export_osw.yaml"),
             }
             config["turbines"] = {"base_turbine": load_yaml(DEFAULT / "turbines", "fixed_osw_turbine.yaml")}
+            config["weather"] = load_weather(DEFAULT / "weather/era5_40.0N_72.5W_1990_2020.csv")[["datetime", "windspeed", "waveheight"]]
+            config["end_year"] = 2020
             return config
         
         if scenario == "floating":
@@ -105,6 +103,8 @@ class WombatWisdem(om.ExplicitComponent):
             }
             config["turbines"] = {"base_turbine": load_yaml(DEFAULT / "turbines", "floating_osw_turbine.yaml")}
             config["port"] = load_yaml(DEFAULT / "project/port", "base_port.yaml")
+            config["weather"] = load_weather(DEFAULT / "weather/era5_41.0N_125.0W_1989_2019.csv")[["datetime", "windspeed", "waveheight"]]
+            config["end_year"] = 2019
             return config
 
     def setup(self):
@@ -337,11 +337,9 @@ class WombatWisdem(om.ExplicitComponent):
                 [1, "dsv"],
                 [1, "cab"],
             ]
-        
-        # TODO: use base weather and determine start stop
-        config["start_year"] = discrete_inputs["start_year"]
-        config["end_year"] = discrete_inputs["end_year"]
 
+        config["start_year"] = config["end_year"] - discrete_inputs["years"] + 1
+        
         config["random_seed"] = discrete_inputs["random_seed"]
         config["random_generator"] = discrete_inputs["random_generator"]
         config["cables"] = inputs["cables"]
