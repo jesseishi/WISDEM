@@ -18,7 +18,7 @@ class Wombat(om.Group):
         
         # TODO: Should the random seed or generator be provided to the interface?
 
-        self.set_input_defaults("years", 20, units="h")
+        self.set_input_defaults("years", 20, units="yr")
         self.set_input_defaults("workday_start", 7, units="h")
         self.set_input_defaults("workday_end", 19, units="h")
         self.set_input_defaults("port_distance", 50, units="km")

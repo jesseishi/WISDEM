@@ -594,7 +594,7 @@ properties:
                     reduced_speed:
                         type: number
                         description: Reduced speed applied to servicing equipment in the reduced speed period
-                        units: km/hr
+                        units: km/h
                         minimum: 1
                         maximum: 100
                         default: "none"
