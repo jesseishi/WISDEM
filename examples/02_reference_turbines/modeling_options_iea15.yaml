@@ -42,19 +42,24 @@ WISDEM:
         workday_end: 19
         equipment_dispatch_distance: 50
         n_ctv: 3
-        n_hlv: 1  # TODO: fixed-bottom only
-        n_tugboat: 2  # TODO: floating only
-        port_workday_start: 6  # TODO: floating only
-        port_workday_end: 18  # TODO: floating only
-        n_port_crews: 2  # TODO: floating only
-        max_port_operations: 2  # TODO: floating only
-        repair_port_distance: 116  # TODO: floating only
         maintenance_start: None
         non_operational_start: None
         non_operational_end: None
         reduced_speed_start: None
         reduced_speed_end: None
         reduced_speed: None
+
+        # TODO: determine how to delineate between fixed vs floating other than different examples
+        # TODO: fixed-bottom only inputs
+        n_hlv: 1
+
+        # TODO: floating only inputs
+        n_tugboat: 2
+        port_workday_start: 6
+        port_workday_end: 18
+        n_port_crews: 2
+        max_port_operations: 2
+        repair_port_distance: 116
         # TODO: random seed or generator input?
         # NOTES
         # Fields excluded from user input that will always use the WOMBAT defaults

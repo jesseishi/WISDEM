@@ -515,8 +515,8 @@ properties:
                         maximum: 10
                         default: 1
                     n_tugboat:
-                        type: Number of tugboat groups that should be available to the port to tow floating turbines to port and back
-                        description: asd
+                        type: number
+                        description: Number of tugboat groups that should be available to the port to tow floating turbines to port and back
                         units: unitless
                         minimum: 1
                         maximum: 10
