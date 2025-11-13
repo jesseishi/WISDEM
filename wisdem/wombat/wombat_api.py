@@ -5,7 +5,7 @@ from warnings import warn
 
 import openmdao.api as om
 from wombat import Simulation
-from wombat.core.library import DEFAULT, load_yaml, load_weather
+from wombat.core.library import DEFAULT_DATA, load_yaml, load_weather
 
 
 class Wombat(om.Group):
@@ -36,6 +36,9 @@ class Wombat(om.Group):
         self.set_input_defaults("reduced_speed_start", None, units="unitless")
         self.set_input_defaults("reduced_speed_end", None, units="unitless")
         self.set_input_defaults("reduced_speed", None, units="km/h")
+        self.set_input_defaults("project_capacity", None, units="MW")
+        self.set_input_defaults("turbine_capex_kw", None, units="$/kW")
+        self.set_input_defaults("turbine_capacity", None, units="MW")
         
         self.set_discrete_input_defaults("layout", None, units="unitless")
         self.set_discrete_input_defaults("random_seed", 42, units="unitless")
@@ -68,42 +71,42 @@ class WombatWisdem(om.ExplicitComponent):
             raise NotImplementedError("No default land-based data is available for WOMBAT.")
         
         if scenario == "fixed":
-            config = load_yaml(DEFAULT / "project/config", "osw_fixed.yaml")
+            config = load_yaml(DEFAULT_DATA / "project/config", "osw_fixed.yaml")
                 
             config["vessels"] = {
-                "ctv": load_yaml(DEFAULT / "vessels", "ctv.yaml"),
-                "hlv": load_yaml(DEFAULT / "vessels", "hlv.yaml"),
-                "cab": load_yaml(DEFAULT / "vessels", "cab.yaml"),
-                "dsv": load_yaml(DEFAULT / "vessels", "dsv.yaml"),
+                "ctv": load_yaml(DEFAULT_DATA / "vessels", "ctv.yaml"),
+                "hlv": load_yaml(DEFAULT_DATA / "vessels", "hlv.yaml"),
+                "cab": load_yaml(DEFAULT_DATA / "vessels", "cab.yaml"),
+                "dsv": load_yaml(DEFAULT_DATA / "vessels", "dsv.yaml"),
             }
-            config["fixed_costs"] = load_yaml(DEFAULT / "project/config", "osw_fixed_bottom_costs.yaml")
-            config["substations"] = {"base_substation": load_yaml(DEFAULT / "substations", "fixed_offshore_substation.yaml")}
+            config["fixed_costs"] = load_yaml(DEFAULT_DATA / "project/config", "osw_fixed_bottom_costs.yaml")
+            config["substations"] = {"base_substation": load_yaml(DEFAULT_DATA / "substations", "fixed_offshore_substation.yaml")}
             config["cables"] = {
-                "base_array": load_yaml(DEFAULT / "cables", "array_osw.yaml"),
-                "base_export": load_yaml(DEFAULT / "cables", "export_osw.yaml"),
+                "base_array": load_yaml(DEFAULT_DATA / "cables", "array_osw.yaml"),
+                "base_export": load_yaml(DEFAULT_DATA / "cables", "export_osw.yaml"),
             }
-            config["turbines"] = {"base_turbine": load_yaml(DEFAULT / "turbines", "fixed_osw_turbine.yaml")}
-            config["weather"] = load_weather(DEFAULT / "weather/era5_40.0N_72.5W_1990_2020.csv")[["datetime", "windspeed", "waveheight"]]
+            config["turbines"] = {"base_turbine": load_yaml(DEFAULT_DATA / "turbines", "fixed_osw_turbine.yaml")}
+            config["weather"] = load_weather(DEFAULT_DATA / "weather/era5_40.0N_72.5W_1990_2020.csv")[["datetime", "windspeed", "waveheight"]]
             config["end_year"] = 2020
             return config
         
         if scenario == "floating":
-            config = load_yaml(DEFAULT / "project/config", "osw_floating.yaml")
+            config = load_yaml(DEFAULT_DATA / "project/config", "osw_floating.yaml")
             config["vessels"] = {
-                "ctv": load_yaml(DEFAULT / "vessels", "ctv.yaml"),
-                "cab": load_yaml(DEFAULT / "vessels", "cab.yaml"),
-                "dsv": load_yaml(DEFAULT / "vessels", "dsv.yaml"),
-                "tugboat": load_yaml(DEFAULT / "vessels", "tugboat.yaml"),
+                "ctv": load_yaml(DEFAULT_DATA / "vessels", "ctv.yaml"),
+                "cab": load_yaml(DEFAULT_DATA / "vessels", "cab.yaml"),
+                "dsv": load_yaml(DEFAULT_DATA / "vessels", "dsv.yaml"),
+                "tugboat": load_yaml(DEFAULT_DATA / "vessels", "tugboat.yaml"),
             }
-            config["fixed_costs"] = load_yaml(DEFAULT / "project/config", "osw_floating_costs.yaml")
-            config["substations"] = {"base_substation": load_yaml(DEFAULT / "substations", "floating_offshore_substation.yaml")}
+            config["fixed_costs"] = load_yaml(DEFAULT_DATA / "project/config", "osw_floating_costs.yaml")
+            config["substations"] = {"base_substation": load_yaml(DEFAULT_DATA / "substations", "floating_offshore_substation.yaml")}
             config["cables"] = {
-                "base_array": load_yaml(DEFAULT / "cables", "array_osw.yaml"),
-                "base_export": load_yaml(DEFAULT / "cables", "export_osw.yaml"),
+                "base_array": load_yaml(DEFAULT_DATA / "cables", "array_osw.yaml"),
+                "base_export": load_yaml(DEFAULT_DATA / "cables", "export_osw.yaml"),
             }
-            config["turbines"] = {"base_turbine": load_yaml(DEFAULT / "turbines", "floating_osw_turbine.yaml")}
-            config["port"] = load_yaml(DEFAULT / "project/port", "base_port.yaml")
-            config["weather"] = load_weather(DEFAULT / "weather/era5_41.0N_125.0W_1989_2019.csv")[["datetime", "windspeed", "waveheight"]]
+            config["turbines"] = {"base_turbine": load_yaml(DEFAULT_DATA / "turbines", "floating_osw_turbine.yaml")}
+            config["port"] = load_yaml(DEFAULT_DATA / "project/port", "base_port.yaml")
+            config["weather"] = load_weather(DEFAULT_DATA / "weather/era5_41.0N_125.0W_1989_2019.csv")[["datetime", "windspeed", "waveheight"]]
             config["end_year"] = 2019
             return config
 
@@ -115,23 +118,14 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_discrete_input("config", base_config, desc="Base configuration dictionary.")
 
         self.add_discrete_input("name", "wisdem-wombat", desc="Name of the simulation")
-        self.add_discrete_input("weather", None, units="")  # TODO: load default file?
+        self.add_discrete_input("weather", None, units="unitless")  # TODO: load default file?
         self.add_discrete_input("workday_start", 6, units="h")
         self.add_discrete_input("workday_end", 6, units="h")
-        self.add_input("inflation_rate", 0, units="percent")
+        self.add_input("project_capacity", None, units="MW")
+        self.add_input("turbine_capex_kw", None, units="$/kW")
+        self.add_input("turbine_capacity", 12, units="MW")
 
-        # Fixed costs
-        # TODO: update for expected, most common scenario
-        # TODO: pathway for fixed, floating, and land-based
-        self.add_input("labor", 0, units="USD/kW", desc="")
-        self.add_input("operations_management_administration", 0, units="USD/kW", desc="")
-        self.add_input("operating_facilities", 0, units="USD/kW", desc="")
-        self.add_input("insurance", 0, units="USD/kW", desc="")
-        self.add_input("annual_leases_fees", 0, units="USD/kW", desc="")
-
-        
-        self.set_input_defaults("layout", None)
-        self.set_input_defaults("project_capacity", None, units="MW")
+        self.add_discrete_input("layout", None, units="unitless")
         
         # Optional primary inputs
         self.add_input("port_distance", None, units="km")
@@ -139,7 +133,6 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_discrete_input("fixed_costs", None, units="")  # TODO: load default file?
         self.add_discrete_input("port", None, units="")  # TODO: load default file?
         self.add_discrete_input("start_year", None, units="yr")
-        self.add_discrete_input("end_year", None, units="yr")
         self.add_discrete_input("maintenance_start", None, units="") # TODO: no date-time units?
         self.add_discrete_input("non_operational_start", None, units="") # TODO: no date-time units?
         self.add_discrete_input("non_operational_end", None, units="") # TODO: no date-time units?
@@ -344,6 +337,20 @@ class WombatWisdem(om.ExplicitComponent):
         config["random_generator"] = discrete_inputs["random_generator"]
         config["cables"] = inputs["cables"]
         config["turbines"] = inputs["turbines"]
+        
+        original_capacity = config["turbines"]["base_turbine"]["capacity_kw"]
+        original_capex = config["turbines"]["base_turbine"]["capex_kw"]
+        config["turbines"]["base_turbine"]["capacity_kw"] = inputs["turbine_capacity"] / 1000.0
+        config["turbines"]["base_turbine"]["capex_kw"] = inputs["turbine_capex_kw"]
+        # TODO: scale all cost values to proportional values
+        turbine_capex = original_capacity * original_capex
+        for subassembly in config["turbines"]["base_turbine"].items():
+            if subassembly in ("capacity_kw", "capex_kw", "power_curve", "n_stacks", "stack_capacity_kw"):
+                continue
+            for i, maintenance in enumerate(config["turbines"]["base_turbine"][subassembly]["maintenance"]):
+                config["turbines"]["base_turbine"][subassembly]["maintenance"][i]["materials"] /= turbine_capex
+            for i, failure in enumerate(config["turbines"]["base_turbine"][subassembly]["failures"]):
+                config["turbines"]["base_turbine"][subassembly]["failures"][i]["materials"] /= turbine_capex
 
         if (val := inputs["power_converter_minor_repair_scale"]) > -1:
             config["turbines"]["base_turbine"]["power_converter"]["failures"][0]["scale"] = val

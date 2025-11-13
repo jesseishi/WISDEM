@@ -1064,6 +1064,8 @@ class WindPark(om.Group):
             self.connect("opex.reduced_speed_start", "wombat.reduced_speed_start")
             self.connect("opex.reduced_speed_end", "wombat.reduced_speed_end")
             self.connect("opex.reduced_speed", "wombat.reduced_speed")
+            self.connect("tcc.turbine_cost_kW", "wombat.turbine_capex_kw")
+            self.connect("configuration.rated_power", "wombat.turbine_capacity")
         
             # TODO: connect the ORBIT layout output to the WOMBAT layout input
             # TODO: connect the ORBIT capacity output to the WOMBAT capacity input
