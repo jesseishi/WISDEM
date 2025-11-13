@@ -342,7 +342,7 @@ class WombatWisdem(om.ExplicitComponent):
         original_capex = config["turbines"]["base_turbine"]["capex_kw"]
         config["turbines"]["base_turbine"]["capacity_kw"] = inputs["turbine_capacity"] / 1000.0
         config["turbines"]["base_turbine"]["capex_kw"] = inputs["turbine_capex_kw"]
-        # TODO: scale all cost values to proportional values
+
         turbine_capex = original_capacity * original_capex
         for subassembly in config["turbines"]["base_turbine"].items():
             if subassembly in ("capacity_kw", "capex_kw", "power_curve", "n_stacks", "stack_capacity_kw"):
@@ -352,6 +352,8 @@ class WombatWisdem(om.ExplicitComponent):
             for i, failure in enumerate(config["turbines"]["base_turbine"][subassembly]["failures"]):
                 config["turbines"]["base_turbine"][subassembly]["failures"][i]["materials"] /= turbine_capex
 
+        # TODO: determine if any of the scale, time, or cost components should be removed, and how
+        # they should connect to WISDEM's other modeled values
         if (val := inputs["power_converter_minor_repair_scale"]) > -1:
             config["turbines"]["base_turbine"]["power_converter"]["failures"][0]["scale"] = val
         if (val := inputs["power_converter_minor_repair_time"]) > -1:
