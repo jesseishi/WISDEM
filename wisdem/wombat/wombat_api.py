@@ -87,10 +87,8 @@ class WombatWisdem(om.ExplicitComponent):
             }
             config["turbines"] = {"base_turbine": load_yaml(DEFAULT_DATA / "turbines", "fixed_osw_turbine.yaml")}
             config["weather"] = load_weather(DEFAULT_DATA / "weather/era5_40.0N_72.5W_1990_2020.csv")[["datetime", "windspeed", "waveheight"]]
-            config["end_year"] = 2020
-            return config
-        
-        if scenario == "floating":
+            config["end_year"] = 2020      
+        elif scenario == "floating":
             config = load_yaml(DEFAULT_DATA / "project/config", "osw_floating.yaml")
             config["vessels"] = {
                 "ctv": load_yaml(DEFAULT_DATA / "vessels", "ctv.yaml"),
@@ -108,46 +106,41 @@ class WombatWisdem(om.ExplicitComponent):
             config["port"] = load_yaml(DEFAULT_DATA / "project/port", "base_port.yaml")
             config["weather"] = load_weather(DEFAULT_DATA / "weather/era5_41.0N_125.0W_1989_2019.csv")[["datetime", "windspeed", "waveheight"]]
             config["end_year"] = 2019
-            return config
+        
+        config["layout_coords"] = "distance"
+        return config
 
     def setup(self):
         """Define all the inputs."""
 
-        # TODO: need to ensure a passthrough for customized layouts (ORBIT or Ard integration)
         base_config = self.load_scenario_config()
         self.add_discrete_input("config", base_config, desc="Base configuration dictionary.")
 
-        self.add_discrete_input("name", "wisdem-wombat", desc="Name of the simulation")
-        self.add_discrete_input("weather", None, units="unitless")  # TODO: load default file?
-        self.add_discrete_input("workday_start", 6, units="h")
-        self.add_discrete_input("workday_end", 6, units="h")
-        self.add_input("project_capacity", None, units="MW")
-        self.add_input("turbine_capex_kw", None, units="$/kW")
-        self.add_input("turbine_capacity", 12, units="MW")
+        self.add_discrete_input("years", 20, desc="Number of years to simulation the operations and maintenance phase of the farm lifecycle")
+        self.add_discrete_input("workday_start", 7, desc="Hour of the day where any work-related activities begin")
+        self.add_discrete_input("workday_end", 19, desc="Hour of the day where any work-related activities end")
+        self.add_input("equipment_dispatch_distance", 50, units="km", desc="Distance, in km, that servicing equipment must travel daily to reach the wind farm")
+        self.add_discrete_input("n_ctv", 3, desc="Number of crew transfer vessels that should be made available to the wind farm.")
+        self.add_discrete_input("n_hlv", 1, desc="Number of heavy lift vessels that should be made available to the wind farm (fixed-bottom simulations only)")
+        self.add_discrete_input("n_tugboat", 2, desc="Number of tugboat groups that should be available to the port to tow floating turbines to port and back")
+        self.add_discrete_input("port_workday_start", 6, desc="Hour of the day where any work-related activities begin for port-side repairs")
+        self.add_discrete_input("port_workday_end", 18, desc="Hour of the day where any work-related activities end for port-side repairs")
+        self.add_discrete_input("n_port_crews", 2, desc="Number of port-side crews available to work on simultaneous repairs for any at-port turbine")
+        self.add_discrete_input("max_port_operations", 2, desc="Number of turbines that can be at port at once")
+        self.add_input("repair_port_distance", 116, units="km", desc="Distance, in km, that tugboats must travel to reach the wind farm for tow-to-port repairs")
+        self.add_discrete_input("maintenance_start", None, desc="Date of first maintenance event to determine regular interval timing. Can be set to prior to the starting year to ensure staggered starts.")
+        self.add_discrete_input("non_operational_start", None, desc="Starting date, in MM/DD format, for an annual period where the site is inaccessible")
+        self.add_discrete_input("non_operational_end", None, desc="Ending date, in MM/DD format, for an annual period where the site is inaccessible")
+        self.add_discrete_input("reduced_speed_start", None, desc="Starting date, in MM/DD format, for an annual period where traveling speed is reduced")
+        self.add_discrete_input("reduced_speed_end", None, desc="Ending date, in MM/DD format, for an annual period where traveling speed is reduced")
+        self.add_input("reduced_speed", None, units="km/h", desc="Reduced speed applied to servicing equipment in the reduced speed period")
+        self.add_input("project_capacity", None, units="MW", desc="Total wind farm capacity")
+        self.add_input("turbine_capex_kw", None, units="$/kW", desc="Turbine CapEx per kW of nameplate capacity")
+        self.add_input("turbine_capacity", None, units="W", desc="Turbine nameplate capacity")
 
-        self.add_discrete_input("layout", None, units="unitless")
+        # TODO: need to ensure a passthrough for customized layouts (ORBIT or Ard integration)
+        self.add_discrete_input("layout", None, desc="Tabular wind farm layout generated from ORBIT")
         
-        # Optional primary inputs
-        self.add_input("port_distance", None, units="km")
-        self.add_discrete_input("layout_coords", "distance", units="unitless")
-        self.add_discrete_input("fixed_costs", None, units="")  # TODO: load default file?
-        self.add_discrete_input("port", None, units="")  # TODO: load default file?
-        self.add_discrete_input("start_year", None, units="yr")
-        self.add_discrete_input("maintenance_start", None, units="") # TODO: no date-time units?
-        self.add_discrete_input("non_operational_start", None, units="") # TODO: no date-time units?
-        self.add_discrete_input("non_operational_end", None, units="") # TODO: no date-time units?
-        self.add_discrete_input("reduced_speed_start", None, units="") # TODO: no date-time units?
-        self.add_discrete_input("reduced_speed_end", None, units="") # TODO: no date-time units?
-        self.add_discrete_input("reduced_speed", None, units="")
-        self.add_discrete_input("random_seed", None, units="")
-        self.add_discrete_input("random_generator", None, units="")
-        
-        self.add_input("service_equipment", None, units="")  # TODO: load default file?
-        self.add_discrete_input("cables", None, units="")  # TODO: load default file?
-        self.add_discrete_input("substations", None, units="")  # TODO: load default file?
-        self.add_discrete_input("turbines", None, units="")  # TODO: load default file?
-        self.add_discrete_input("vessels", None, units="")  # TODO: load default file?
-
         # Turbine modifications
         # All defaults are -1 to indicate the WOMBAT defaults will be used
         self.add_input("power_converter_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
@@ -297,7 +290,6 @@ class WombatWisdem(om.ExplicitComponent):
         config = inputs["config"]
         config["name"] = discrete_inputs["name"]
         config["layout"] = create_layout(inputs, outputs, discrete_inputs, discrete_outputs)
-        config["layout_coords"] = discrete_inputs["layout_coords"]
         config["weather"] = discrete_inputs["weather"]
         config["workday_start"] = discrete_inputs["workday_start"]
         config["workday_end"] = discrete_inputs["workday_end"]
