@@ -272,6 +272,66 @@ class WombatWisdem(om.ExplicitComponent):
             units="USD",
             desc="Direct cost for renting and operating servicing equipment",
         )
+        self.add_output(
+            "time_availability",
+            0.0,
+            units="unitless",
+            desc="Project-level uptime based on time."
+        )
+        self.add_output(
+            "energy_availability",
+            0.0,
+            units="unitless",
+            desc="Project-level uptime based on capacity to produce energy."
+        )
+        self.add_output(
+            "net_capacity_factor",
+            0.0,
+            units="unitless",
+            desc="Ratio of actual energy produced (internal IEC power curve-based w/o unmodeled losses) to theoretical maximum of energy production."
+        )
+        self.add_output(
+            "gross_capacity_factor",
+            0.0,
+            units="USD",
+            desc="Ratio of potential to produce energy (internal IEC power curve-based w/o unmodeled losses) to theoretical maximum of energy production."
+        )
+        self.add_output(
+            "scheduled_task_completion_rate",
+            0.0,
+            units="USD",
+            desc=
+        )
+        self.add_output(
+            "unscheduled_task_completion_rate",
+            0.0,
+            units="USD",
+            desc=
+        )
+        self.add_output(
+            "combined_task_completion_rate",
+            0.0,
+            units="USD",
+            desc=
+        )
+        self.add_output(
+            "total_equipment_cost",
+            0.0,
+            units="USD",
+            desc=
+        )
+        "equipment_cost_breakdown"
+        "equipment_utilization_rate"
+        "equipment_dispatch_summary"
+        "vessel_crew_hours_at_sea"
+        "vessel_crew_hours_at_sea"
+        "total_tows"
+        "direct_labor"
+        "materials_by_subassembly"
+        "total_materials"
+        "indirect_labor"
+        "total_fixed_costs"
+        "equipment_opex"
 
     def create_layout(self, inputs, outputs, discrete_inputs, discrete_outputs):
         """Creates the WOMBAT layout DataFrame from the ORBIT outputs."""
