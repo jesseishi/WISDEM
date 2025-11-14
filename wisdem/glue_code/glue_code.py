@@ -933,8 +933,8 @@ class WindPark(om.Group):
 
         self.add_subsystem("wt", WT_RNTA(modeling_options=modeling_options, opt_options=opt_options), promotes=["*"])
         
-        model_bos = model_bos
-        is_offshore = is_offshore
+        model_bos = modeling_options["WISDEM"]["BOS"]["flag"]
+        is_offshore = modeling_options["flags"]["offshore"]
         if model_bos:
             if is_offshore:
                 self.add_subsystem(
@@ -955,8 +955,12 @@ class WindPark(om.Group):
             )
 
         if modeling_options["flags"]["opex"]:
-            if model_bos and is_offshore:
-                self.add_subsystem("wombat", Wombat())
+            if model_bos:
+                if is_offshore:
+                    scenario = "floating" if modeling_options["flags"]["floating"] else "fixed"
+                    self.add_subsystem("wombat", Wombat(scenario=scenario))
+                else:
+                    self.add_subsystem("wombat", Wombat(scenario="land"))
 
         # BOS inputs
         if model_bos:

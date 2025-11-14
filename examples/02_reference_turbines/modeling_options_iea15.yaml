@@ -47,7 +47,7 @@ WISDEM:
         non_operational_end: None
         reduced_speed_start: None
         reduced_speed_end: None
-        reduced_speed: None
+        reduced_speed: 0
 
         # TODO: determine how to delineate between fixed vs floating other than different examples
         # TODO: fixed-bottom only inputs

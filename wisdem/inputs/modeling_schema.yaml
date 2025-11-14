@@ -508,8 +508,8 @@ properties:
                         maximum: 20
                         default: 3
                     n_hlv:
-                        type: Number of heavy lift vessels that should be made available to the wind farm (fixed-bottom simulations only)
-                        description: asd
+                        type: number
+                        description: Number of heavy lift vessels that should be made available to the wind farm (fixed-bottom simulations only)
                         units: unitless
                         minimum: 1
                         maximum: 10
@@ -560,44 +560,34 @@ properties:
                         type: string
                         description: Starting date, in MM/DD format; year will be inserted automatically based on input to `years`
                         units: unitless
-                        minimum: "01/01"
-                        maximum: "12/31"
                         default: "none"
                     non_operational_start:
-                        type: number
+                        type: string
                         description: Starting date, in MM/DD format, for an annual period where the site is inaccessible
                         units: string
-                        minimum: "01/01"
-                        maximum: "12/31"
                         default: "none"
                     non_operational_end:
-                        type: number
+                        type: string
                         description: Ending date, in MM/DD format, for an annual period where the site is inaccessible
                         units: unitless
-                        minimum: "01/01"
-                        maximum: "12/31"
                         default: "none"
                     reduced_speed_start:
                         type: string
                         description: Starting date, in MM/DD format, for an annual period where traveling speed is reduced
                         units: unitless
-                        minimum: "01/01"
-                        maximum: "12/31"
                         default: "none"
                     reduced_speed_end:
-                        type: str
+                        type: string
                         description: Ending date, in MM/DD format, for an annual period where traveling speed is reduced
                         units: unitless
-                        minimum: "01/01"
-                        maximum: "12/31"
                         default: "none"
                     reduced_speed:
                         type: number
                         description: Reduced speed applied to servicing equipment in the reduced speed period
                         units: km/h
-                        minimum: 1
+                        minimum: 0
                         maximum: 100
-                        default: "none"
+                        default: 0
 
             FloatingSE:
                 type: object

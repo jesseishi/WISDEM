@@ -500,14 +500,13 @@ class OrbitWisdem(om.ExplicitComponent):
         )
         self.add_output(
             "capacity",
-            pd.DataFrame(),
+            0,
             units="MW",
             desc="Wind plant capacity, in MW.",
         )
         self.add_discrete_output(
             "layout",
-            pd.DataFrame(),
-            units="unitless",
+            None,
             desc="Farm layout to be used by WOMBAT.",
         )
 
