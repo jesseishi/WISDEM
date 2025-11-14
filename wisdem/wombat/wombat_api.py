@@ -288,50 +288,98 @@ class WombatWisdem(om.ExplicitComponent):
             "net_capacity_factor",
             0.0,
             units="unitless",
-            desc="Ratio of actual energy produced (internal IEC power curve-based w/o unmodeled losses) to theoretical maximum of energy production."
+            desc="Ratio of actual energy produced (internal IEC power curve-based w/o unmodeled losses) to theoretical maximum of energy production.",
         )
         self.add_output(
             "gross_capacity_factor",
             0.0,
             units="USD",
-            desc="Ratio of potential to produce energy (internal IEC power curve-based w/o unmodeled losses) to theoretical maximum of energy production."
+            desc="Ratio of potential to produce energy (internal IEC power curve-based w/o unmodeled losses) to theoretical maximum of energy production.",
         )
         self.add_output(
             "scheduled_task_completion_rate",
             0.0,
             units="USD",
-            desc=
+            desc="Completion rate for all scheduled (maintenance) tasks.",
         )
         self.add_output(
             "unscheduled_task_completion_rate",
             0.0,
             units="USD",
-            desc=
+            desc="Completion rate for all unscheduled (failure) events.",
         )
         self.add_output(
             "combined_task_completion_rate",
             0.0,
             units="USD",
-            desc=
+            desc="Completion rate for all maintenance and failure events.",
         )
         self.add_output(
             "total_equipment_cost",
             0.0,
             units="USD",
-            desc=
+            desc="Cost of all direct repair related equipment (vessels, cranes, port equipment).",
         )
-        "equipment_cost_breakdown"
-        "equipment_utilization_rate"
-        "equipment_dispatch_summary"
-        "vessel_crew_hours_at_sea"
-        "vessel_crew_hours_at_sea"
-        "total_tows"
-        "direct_labor"
-        "materials_by_subassembly"
-        "total_materials"
-        "indirect_labor"
-        "total_fixed_costs"
-        "equipment_opex"
+        self.add_discrete_output(
+            "equipment_cost_breakdown",
+            None,
+            units="unitless",
+            desc="Data frame of equipment costs by activity type.",
+        )
+        self.add_discrete_output(
+            "equipment_utilization_rate",
+            None,
+            units="unitless",
+            desc="Data frame of utilization ratio of each servicing equipment.",
+        )
+        self.add_discrete_output(
+            "equipment_dispatch_summary",
+            None,
+            units="unitless",
+            desc="Data frame of mobilization and chartering periods by servicing equipment.",
+        )
+        self.add_discrete_output(
+            "vessel_crew_hours_at_sea",
+            None,
+            units="unitless",
+            desc="Data frame of the vessel hours at sea (or crew if crew data are provided).",
+        )
+        self.add_discrete_output(
+            "total_tows",
+            0,
+            units="unitless",
+            desc="Total number of times turbines are towed between site and port for repair.",
+        )
+        self.add_output(
+            "direct_labor",
+            0.0,
+            units="$",
+            desc="Cost of labor accrued through repair operations.",
+        )
+        self.add_output(
+            "indirect_labor",
+            0.0,
+            units="$",
+            desc="Fixed cost of labor for life of the farm.",
+        )
+        self.add_discrete_output(
+            "materials_by_subassembly",
+            None,
+            units="unitless",
+            desc="Cost of materials required for un/scheduled maintenance activities by subassembly.",
+        )
+        self.add_output(
+            "total_materials",
+            0,
+            units="$,
+            desc="Total cost of materials for un/scheduled maintenance activities.",
+        )
+        self.add_output(
+            "total_fixed_costs",
+            0,
+            units="$",
+            desc="Total cost of annualized fixed operational costs.",
+        )
 
     def create_layout(self, inputs, outputs, discrete_inputs, discrete_outputs):
         """Creates the WOMBAT layout DataFrame from the ORBIT outputs."""
@@ -624,19 +672,16 @@ class WombatWisdem(om.ExplicitComponent):
         outputs["equipment_cost_breakdown"] = metrics.equipment_costs(frequency="project", by_equipment=False)
         outputs["equipment_utilization_rate"] =  metrics.service_equipment_utilization(frequency="project")
         outputs["equipment_dispatch_summary"] = metrics.dispatch_summary(frequency="project")
-        outputs["vessel_crew_hours_at_sea"] = metrics.vessel_crew_hours_at_sea(frequency="project", by_equipment=True).squeeze()
         
-        outputs["vessel_crew_hours_at_sea"] = metrics.vessel_crew_hours_at_sea(frequency="project", by_equipment=False).squeeze()
-        outputs["total_tows"] = metrics.number_of_tows(frequency="project").squeeze()
-        outputs["direct_labor"] = metrics.labor_costs(frequency="project", by_type=False).squeeze()
-        outputs["materials_by_subassembly"] = metrics.component_costs(frequency="project", by_category=False, by_action=False)  # TODO: are dataframe outputs ok, or different type?
+        outputs["vessel_crew_hours_at_sea"] = metrics.vessel_crew_hours_at_sea(frequency="project", by_equipment=True)
+        outputs["total_tows"] = metrics.number_of_tows(frequency="project")
+        outputs["direct_labor"] = metrics.labor_costs(frequency="project", by_type=False)
+        outputs["materials_by_subassembly"] = metrics.component_costs(frequency="project", by_category=False, by_action=False)
         outputs["total_materials"] = outputs["materials_by_subassembly"].values.sum()
         
         fixed_costs = metrics.project_fixed_costs(frequency="project", resolution="medium")
         outputs["indirect_labor"] = fixed_costs[["labor"]].squeeze()
         outputs["total_fixed_costs"] = fixed_costs.values.sum()
-        
-        outputs["equipment_opex"] = opex.equipment_cost
         
         # NOTE: emissions need assumptions, so it's excluded
         # TODO: process times, request summary, power production, NPV (requires discount rate and offtake)
