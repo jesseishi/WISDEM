@@ -311,7 +311,27 @@ class WindTurbineOntologyOpenMDAO(om.Group):
         # Operation and maintenance inputs
         if modeling_options["flags"]["opex"]:
             opex_ivc = self.add_subsystem("opex", om.IndepVarComp())
-            opex_ivc.add_output("power_converter_minor_repair_scale", 2.959, desc="Scale factor for minor repairs of power converter")
+            # opex_ivc.add_output("years", 20, desc="Number of years to simulation the operations and maintenance phase of the farm lifecycle")
+            # opex_ivc.add_output("workday_start", 7, desc="Hour of the day where any work-related activities begin")
+            # opex_ivc.add_output("workday_end", 19, desc="Hour of the day where any work-related activities end")
+            opex_ivc.add_output("equipment_dispatch_distance", 50, units="km", desc="Distance, in km, that servicing equipment must travel daily to reach the wind farm")
+            # opex_ivc.add_output("n_ctv", 3, desc="Number of crew transfer vessels that should be made available to the wind farm.")
+            # opex_ivc.add_output("n_hlv", 1, desc="Number of heavy lift vessels that should be made available to the wind farm (fixed-bottom simulations only)")
+            # opex_ivc.add_output("n_tugboat", 2, desc="Number of tugboat groups that should be available to the port to tow floating turbines to port and back")
+            # opex_ivc.add_output("port_workday_start", 6, desc="Hour of the day where any work-related activities begin for port-side repairs")
+            # opex_ivc.add_output("port_workday_end", 18, desc="Hour of the day where any work-related activities end for port-side repairs")
+            # opex_ivc.add_output("n_port_crews", 2, desc="Number of port-side crews available to work on simultaneous repairs for any at-port turbine")
+            # opex_ivc.add_output("max_port_operations", 2, desc="Number of turbines that can be at port at once")
+            opex_ivc.add_output("repair_port_distance", 116, units="km", desc="Distance, in km, that tugboats must travel to reach the wind farm for tow-to-port repairs")
+            # opex_ivc.add_discrete_output("maintenance_start", None, desc="Date of first maintenance event to determine regular interval timing. Can be set to prior to the starting year to ensure staggered starts.")
+            # opex_ivc.add_discrete_output("non_operational_start", None, desc="Starting date, in MM/DD format, for an annual period where the site is inaccessible")
+            # opex_ivc.add_discrete_output("non_operational_end", None, desc="Ending date, in MM/DD format, for an annual period where the site is inaccessible")
+            # opex_ivc.add_discrete_output("reduced_speed_start", None, desc="Starting date, in MM/DD format, for an annual period where traveling speed is reduced")
+            # opex_ivc.add_discrete_output("reduced_speed_end", None, desc="Ending date, in MM/DD format, for an annual period where traveling speed is reduced")
+            opex_ivc.add_output("reduced_speed", 0, units="km/h", desc="Reduced speed applied to servicing equipment in the reduced speed period")
+            opex_ivc.add_output("project_capacity", 0, units="MW", desc="Total wind farm capacity")
+            opex_ivc.add_output("turbine_capex_kw", 0, units="USD/kW", desc="Turbine CapEx per kW of nameplate capacity")
+            opex_ivc.add_output("turbine_capacity", 0, units="W", desc="Turbine nameplate capacity")
 
         # Cost analysis inputs
         if modeling_options["flags"]["costs"]:
