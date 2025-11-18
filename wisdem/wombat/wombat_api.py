@@ -380,7 +380,7 @@ class WombatWisdem(om.ExplicitComponent):
         scenario = self.options["scenario"]
         config = inputs["config"]
         config["name"] = discrete_inputs["name"]
-        config["layout"] = create_layout(inputs, outputs, discrete_inputs, discrete_outputs)
+        config["layout"] = self.create_layout(inputs, outputs, discrete_inputs, discrete_outputs)
         config["weather"] = discrete_inputs["weather"]
         config["workday_start"] = discrete_inputs["workday_start"]
         config["workday_end"] = discrete_inputs["workday_end"]
