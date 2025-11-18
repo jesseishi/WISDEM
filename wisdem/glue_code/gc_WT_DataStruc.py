@@ -311,8 +311,8 @@ class WindTurbineOntologyOpenMDAO(om.Group):
         # Operation and maintenance inputs
         if modeling_options["flags"]["opex"]:
             opex_ivc = self.add_subsystem("opex", om.IndepVarComp())
-            # opex_ivc.add_output("workday_start", 7, desc="Hour of the day where any work-related activities begin")
-            # opex_ivc.add_output("workday_end", 19, desc="Hour of the day where any work-related activities end")
+            opex_ivc.add_discrete_output("workday_start", 7, desc="Hour of the day where any work-related activities begin")
+            opex_ivc.add_discrete_output("workday_end", 19, desc="Hour of the day where any work-related activities end")
             opex_ivc.add_output("equipment_dispatch_distance", 50, units="km", desc="Distance, in km, that servicing equipment must travel daily to reach the wind farm")
             opex_ivc.add_discrete_output("n_ctv", 3, desc="Number of crew transfer vessels that should be made available to the wind farm.")
             opex_ivc.add_discrete_output("n_hlv", 1, desc="Number of heavy lift vessels that should be made available to the wind farm (fixed-bottom simulations only)")
