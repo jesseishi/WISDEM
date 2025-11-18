@@ -1050,7 +1050,7 @@ class WindPark(om.Group):
 
         # OPEX inputs
         if modeling_options["flags"]["opex"] and model_bos and is_offshore:
-            self.connect("opex.years", "wombat.years")
+            self.connect("configuration.lifetime", "wombat.years")
             self.connect("opex.workday_start", "wombat.workday_start")
             self.connect("opex.workday_end", "wombat.workday_end")
             self.connect("opex.equipment_dispatch_distance", "wombat.equipment_dispatch_distance")

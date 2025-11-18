@@ -311,7 +311,6 @@ class WindTurbineOntologyOpenMDAO(om.Group):
         # Operation and maintenance inputs
         if modeling_options["flags"]["opex"]:
             opex_ivc = self.add_subsystem("opex", om.IndepVarComp())
-            # opex_ivc.add_output("years", 20, desc="Number of years to simulation the operations and maintenance phase of the farm lifecycle")
             # opex_ivc.add_output("workday_start", 7, desc="Hour of the day where any work-related activities begin")
             # opex_ivc.add_output("workday_end", 19, desc="Hour of the day where any work-related activities end")
             opex_ivc.add_output("equipment_dispatch_distance", 50, units="km", desc="Distance, in km, that servicing equipment must travel daily to reach the wind farm")
@@ -330,7 +329,6 @@ class WindTurbineOntologyOpenMDAO(om.Group):
             # opex_ivc.add_discrete_output("reduced_speed_end", None, desc="Ending date, in MM/DD format, for an annual period where traveling speed is reduced")
             opex_ivc.add_output("reduced_speed", 0, units="km/h", desc="Reduced speed applied to servicing equipment in the reduced speed period")
             opex_ivc.add_output("project_capacity", 0, units="MW", desc="Total wind farm capacity")
-            opex_ivc.add_output("turbine_capex_kw", 0, units="USD/kW", desc="Turbine CapEx per kW of nameplate capacity")
             opex_ivc.add_output("turbine_capacity", 0, units="W", desc="Turbine nameplate capacity")
 
         # Cost analysis inputs
