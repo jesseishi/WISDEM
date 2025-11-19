@@ -240,12 +240,12 @@ class WombatWisdem(om.ExplicitComponent):
             ),
         )
         self.add_output(
-            "total_opex_kw",
+            "annual_opex_per_kW",
             0.0,
-            units="USD",
+            units="USD/kW/yr",
             desc=(
-                "Total operational expenditure (fixed costs, port fees, labor, servicing"
-                " equipment, and materials) per kW"
+                "Average annual operational expenditure (fixed costs, port fees, labor,"
+                " servicing equipment, and materials) per kW"
             ),
         )
         self.add_output(
@@ -637,7 +637,7 @@ class WombatWisdem(om.ExplicitComponent):
 
         opex = metrics.opex(frequency, by_category=True)
         outputs["total_opex"] = opex.OpEx
-        outputs["total_opex_kw"] = outputs["total_opex"] / capacity_kW
+        outputs["annual_opex_per_kW"] = outputs["total_opex"] / capacity_kW / sim.env.simulation_years
         
         outputs["time_availability"] = metrics.time_based_availability(frequency="project", by="windfarm").squeeze()
         outputs["energy_availability"] = metrics.production_based_availability(frequency="project", by="windfarm").squeeze()

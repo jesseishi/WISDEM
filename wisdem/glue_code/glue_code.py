@@ -1090,7 +1090,10 @@ class WindPark(om.Group):
             if modeling_options["flags"]["control"]:
                 self.connect("configuration.rated_power", "financese.machine_rating")
             self.connect("costs.turbine_number", "financese.turbine_number")
-            self.connect("costs.opex_per_kW", "financese.opex_per_kW")
+            if modeling_options["flags"]["opex"]:
+                self.connect("wombat.annual_opex_per_kW", "financese.opex_per_kW")
+            else:
+                self.connect("costs.opex_per_kW", "financese.opex_per_kW")
             self.connect("costs.offset_tcc_per_kW", "financese.offset_tcc_per_kW")
             self.connect("costs.wake_loss_factor", "financese.wake_loss_factor")
             self.connect("costs.fixed_charge_rate", "financese.fixed_charge_rate")
