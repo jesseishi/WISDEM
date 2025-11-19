@@ -20,16 +20,7 @@ class Wombat(om.Group):
 
         # TODO: Should the random seed or generator be provided to the interface?
         self.set_input_defaults("years", 20, units="yr")
-        # self.set_input_defaults("workday_start", 7)
-        # self.set_input_defaults("workday_end", 19)
         self.set_input_defaults("equipment_dispatch_distance", 50, units="km")
-        # self.set_input_defaults("n_ctv", 3)
-        # self.set_input_defaults("n_hlv", 1)
-        # self.set_input_defaults("n_tugboat", 2)
-        # self.set_input_defaults("port_workday_start", 6)
-        # self.set_input_defaults("port_workday_end", 18)
-        # self.set_input_defaults("n_port_crews", 2)
-        # self.set_input_defaults("max_port_operations", 2)
         self.set_input_defaults("repair_port_distance", 116, units="km")
         self.set_input_defaults("project_capacity", None, units="MW")
         self.set_input_defaults("turbine_capex_kw", None, units="USD/kW")
@@ -126,7 +117,6 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("turbine_capex_kw", 0, units="USD/kW", desc="Turbine CapEx per kW of nameplate capacity")
         self.add_input("turbine_capacity", 0, units="W", desc="Turbine nameplate capacity")
 
-        # TODO: need to ensure a passthrough for customized layouts (ORBIT or Ard integration)
         self.add_discrete_input("layout", None, desc="Tabular wind farm layout generated from ORBIT")
         
         # Turbine modifications
@@ -649,7 +639,6 @@ class WombatWisdem(om.ExplicitComponent):
         outputs["total_equipment_cost"] = metrics.equipment_costs(frequency="project", by_equipment=False).squeeze()
         
         # TODO: Do we need individual vessel/vehicle breakdowns?
-        # TODO: are dataframe outputs ok, or different type?
         discrete_outputs["equipment_cost_breakdown"] = metrics.equipment_costs(frequency="project", by_equipment=False)
         discrete_outputs["equipment_utilization_rate"] =  metrics.service_equipment_utilization(frequency="project")
         discrete_outputs["equipment_dispatch_summary"] = metrics.dispatch_summary(frequency="project")
