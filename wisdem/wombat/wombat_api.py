@@ -19,7 +19,7 @@ class Wombat(om.Group):
         """Define all input variables from all models."""
 
         # TODO: Should the random seed or generator be provided to the interface?
-        # self.set_input_defaults("years", 20)
+        self.set_input_defaults("years", 20, units="yr")
         # self.set_input_defaults("workday_start", 7)
         # self.set_input_defaults("workday_end", 19)
         self.set_input_defaults("equipment_dispatch_distance", 50, units="km")
@@ -102,10 +102,9 @@ class WombatWisdem(om.ExplicitComponent):
     def setup(self):
         """Define all the inputs."""
 
-        base_config = self.load_scenario_config()
-        self.add_discrete_input("config", base_config, desc="Base configuration dictionary.")
-
-        self.add_discrete_input("years", 20, desc="Number of years to simulation the operations and maintenance phase of the farm lifecycle")
+        self._wombat_config = self.load_scenario_config()
+        
+        self.add_input("years", 20, units="yr", desc="Number of years to simulation the operations and maintenance phase of the farm lifecycle")
         self.add_discrete_input("workday_start", 7, desc="Hour of the day where any work-related activities begin")
         self.add_discrete_input("workday_end", 19, desc="Hour of the day where any work-related activities end")
         self.add_input("equipment_dispatch_distance", 50, units="km", desc="Distance, in km, that servicing equipment must travel daily to reach the wind farm")
@@ -366,7 +365,7 @@ class WombatWisdem(om.ExplicitComponent):
 
     def create_layout(self, inputs, outputs, discrete_inputs, discrete_outputs):
         """Creates the WOMBAT layout DataFrame from the ORBIT outputs."""
-        layout = discrete_outputs["layout"]
+        layout = discrete_inputs["layout"]
         layout[["type", "subassembly", "upstream_cable"]] = ["turbine", "base_turbine", "base_array"]
         layout.loc[
             layout.id.isin(layout.substation_id),
@@ -378,10 +377,8 @@ class WombatWisdem(om.ExplicitComponent):
         """Creates the WOMBAT configuration file."""
         
         scenario = self.options["scenario"]
-        config = inputs["config"]
-        config["name"] = discrete_inputs["name"]
+        config = self._wombat_config
         config["layout"] = self.create_layout(inputs, outputs, discrete_inputs, discrete_outputs)
-        config["weather"] = discrete_inputs["weather"]
         config["workday_start"] = discrete_inputs["workday_start"]
         config["workday_end"] = discrete_inputs["workday_end"]
         config["project_capacity"] = inputs["project_capacity"]
@@ -391,7 +388,7 @@ class WombatWisdem(om.ExplicitComponent):
         config["non_operational_end"] = discrete_inputs["non_operational_end"]
         config["reduced_speed_start"] = discrete_inputs["reduced_speed_start"]
         config["reduced_speed_end"] = discrete_inputs["reduced_speed_end"]
-        config["reduced_speed"] = discrete_inputs["reduced_speed"]
+        config["reduced_speed"] = inputs["reduced_speed"]
         
         if scenario == "floating":
             config["service_equipment"] = [
@@ -416,12 +413,12 @@ class WombatWisdem(om.ExplicitComponent):
         else:
             raise NotImplementedError("No default land-based OpEx data available for simulation.")
 
-        config["start_year"] = config["end_year"] - discrete_inputs["years"] + 1
+        config["start_year"] = config["end_year"] - int(inputs["years"][0]) + 1
         
-        config["random_seed"] = discrete_inputs["random_seed"]
-        config["random_generator"] = discrete_inputs["random_generator"]
-        config["cables"] = inputs["cables"]
-        config["turbines"] = inputs["turbines"]
+        config["random_seed"] = 42
+        
+        # TODO: determine if additional  turbines should be allowed
+        # config["turbines"] |= inputs["turbines"]
         
         original_capacity = config["turbines"]["base_turbine"]["capacity_kw"]
         original_capex = config["turbines"]["base_turbine"]["capex_kw"]
@@ -429,7 +426,7 @@ class WombatWisdem(om.ExplicitComponent):
         config["turbines"]["base_turbine"]["capex_kw"] = inputs["turbine_capex_kw"]
 
         turbine_capex = original_capacity * original_capex
-        for subassembly in config["turbines"]["base_turbine"].items():
+        for subassembly in config["turbines"]["base_turbine"].keys():
             if subassembly in ("capacity_kw", "capex_kw", "power_curve", "n_stacks", "stack_capacity_kw"):
                 continue
             for i, maintenance in enumerate(config["turbines"]["base_turbine"][subassembly]["maintenance"]):
@@ -446,17 +443,17 @@ class WombatWisdem(om.ExplicitComponent):
         if (val := inputs["power_converter_minor_repair_materials"]) > -1:
             config["turbines"]["base_turbine"]["power_converter"]["failures"][0]["materials"] = val
         if (val := inputs["power_converter_major_repair_scale"]) > -1:
-            config["turbines"]["base_turbine"]["power_converter"][1]["scale"] = val
+            config["turbines"]["base_turbine"]["power_converter"]["failures"][1]["scale"] = val
         if (val := inputs["power_converter_major_repair_time"]) > -1:
-            config["turbines"]["base_turbine"]["power_converter"][1]["time"] = val
+            config["turbines"]["base_turbine"]["power_converter"]["failures"][1]["time"] = val
         if (val := inputs["power_converter_major_repair_materials"]) > -1:
-            config["turbines"]["base_turbine"]["power_converter"][1]["materials"] = val
+            config["turbines"]["base_turbine"]["power_converter"]["failures"][1]["materials"] = val
         if (val := inputs["power_converter_replacement_scale"]) > -1:
-            config["turbines"]["base_turbine"]["power_converter"][2]["scale"] = val
+            config["turbines"]["base_turbine"]["power_converter"]["failures"][2]["scale"] = val
         if (val := inputs["power_converter_replacement_time"]) > -1:
-            config["turbines"]["base_turbine"]["power_converter"][2]["time"] = val
+            config["turbines"]["base_turbine"]["power_converter"]["failures"][2]["time"] = val
         if (val := inputs["power_converter_replacement_materials"]) > -1:
-            config["turbines"]["base_turbine"]["power_converter"][2]["materials"] = val
+            config["turbines"]["base_turbine"]["power_converter"]["failures"][2]["materials"] = val
 
         if (val := inputs["electrical_system_minor_repair_scale"]) > -1:
             config["turbines"]["base_turbine"]["electrical_system"]["failures"][0]["scale"] = val
@@ -465,17 +462,17 @@ class WombatWisdem(om.ExplicitComponent):
         if (val := inputs["electrical_system_minor_repair_materials"]) > -1:
             config["turbines"]["base_turbine"]["electrical_system"]["failures"][0]["materials"] = val
         if (val := inputs["electrical_system_major_repair_scale"]) > -1:
-            config["turbines"]["base_turbine"]["electrical_system"][1]["scale"] = val
+            config["turbines"]["base_turbine"]["electrical_system"]["failures"][1]["scale"] = val
         if (val := inputs["electrical_system_major_repair_time"]) > -1:
-            config["turbines"]["base_turbine"]["electrical_system"][1]["time"] = val
+            config["turbines"]["base_turbine"]["electrical_system"]["failures"][1]["time"] = val
         if (val := inputs["electrical_system_major_repair_materials"]) > -1:
-            config["turbines"]["base_turbine"]["electrical_system"][1]["materials"] = val
+            config["turbines"]["base_turbine"]["electrical_system"]["failures"][1]["materials"] = val
         if (val := inputs["electrical_system_replacement_scale"]) > -1:
-            config["turbines"]["base_turbine"]["electrical_system"][2]["scale"] = val
+            config["turbines"]["base_turbine"]["electrical_system"]["failures"][2]["scale"] = val
         if (val := inputs["electrical_system_replacement_time"]) > -1:
-            config["turbines"]["base_turbine"]["electrical_system"][2]["time"] = val
+            config["turbines"]["base_turbine"]["electrical_system"]["failures"][2]["time"] = val
         if (val := inputs["electrical_system_replacement_materials"]) > -1:
-            config["turbines"]["base_turbine"]["electrical_system"][2]["materials"] = val
+            config["turbines"]["base_turbine"]["electrical_system"]["failures"][2]["materials"] = val
 
         if (val := inputs["hydraulic_pitch_system_minor_repair_scale"]) > -1:
             config["turbines"]["base_turbine"]["hydraulic_pitch_system"]["failures"][0]["scale"] = val
@@ -484,17 +481,17 @@ class WombatWisdem(om.ExplicitComponent):
         if (val := inputs["hydraulic_pitch_system_minor_repair_materials"]) > -1:
             config["turbines"]["base_turbine"]["hydraulic_pitch_system"]["failures"][0]["materials"] = val
         if (val := inputs["hydraulic_pitch_system_major_repair_scale"]) > -1:
-            config["turbines"]["base_turbine"]["hydraulic_pitch_system"][1]["scale"] = val
+            config["turbines"]["base_turbine"]["hydraulic_pitch_system"]["failures"][1]["scale"] = val
         if (val := inputs["hydraulic_pitch_system_major_repair_time"]) > -1:
-            config["turbines"]["base_turbine"]["hydraulic_pitch_system"][1]["time"] = val
+            config["turbines"]["base_turbine"]["hydraulic_pitch_system"]["failures"][1]["time"] = val
         if (val := inputs["hydraulic_pitch_system_major_repair_materials"]) > -1:
-            config["turbines"]["base_turbine"]["hydraulic_pitch_system"][1]["materials"] = val
+            config["turbines"]["base_turbine"]["hydraulic_pitch_system"]["failures"][1]["materials"] = val
         if (val := inputs["hydraulic_pitch_system_replacement_scale"]) > -1:
-            config["turbines"]["base_turbine"]["hydraulic_pitch_system"][2]["scale"] = val
+            config["turbines"]["base_turbine"]["hydraulic_pitch_system"]["failures"][2]["scale"] = val
         if (val := inputs["hydraulic_pitch_system_replacement_time"]) > -1:
-            config["turbines"]["base_turbine"]["hydraulic_pitch_system"][2]["time"] = val
+            config["turbines"]["base_turbine"]["hydraulic_pitch_system"]["failures"][2]["time"] = val
         if (val := inputs["hydraulic_pitch_system_replacement_materials"]) > -1:
-            config["turbines"]["base_turbine"]["hydraulic_pitch_system"][2]["materials"] = val
+            config["turbines"]["base_turbine"]["hydraulic_pitch_system"]["failures"][2]["materials"] = val
 
         if (val := inputs["ballast_pump_minor_repair_scale"]) > -1:
             config["turbines"]["base_turbine"]["ballast_pump"]["failures"][0]["scale"] = val
@@ -510,17 +507,17 @@ class WombatWisdem(om.ExplicitComponent):
         if (val := inputs["yaw_system_minor_repair_materials"]) > -1:
             config["turbines"]["base_turbine"]["yaw_system"]["failures"][0]["materials"] = val
         if (val := inputs["yaw_system_major_repair_scale"]) > -1:
-            config["turbines"]["base_turbine"]["yaw_system"][1]["scale"] = val
+            config["turbines"]["base_turbine"]["yaw_system"]["failures"][1]["scale"] = val
         if (val := inputs["yaw_system_major_repair_time"]) > -1:
-            config["turbines"]["base_turbine"]["yaw_system"][1]["time"] = val
+            config["turbines"]["base_turbine"]["yaw_system"]["failures"][1]["time"] = val
         if (val := inputs["yaw_system_major_repair_materials"]) > -1:
-            config["turbines"]["base_turbine"]["yaw_system"][1]["materials"] = val
+            config["turbines"]["base_turbine"]["yaw_system"]["failures"][1]["materials"] = val
         if (val := inputs["yaw_system_replacement_scale"]) > -1:
-            config["turbines"]["base_turbine"]["yaw_system"][2]["scale"] = val
+            config["turbines"]["base_turbine"]["yaw_system"]["failures"][2]["scale"] = val
         if (val := inputs["yaw_system_replacement_time"]) > -1:
-            config["turbines"]["base_turbine"]["yaw_system"][2]["time"] = val
+            config["turbines"]["base_turbine"]["yaw_system"]["failures"][2]["time"] = val
         if (val := inputs["yaw_system_replacement_materials"]) > -1:
-            config["turbines"]["base_turbine"]["yaw_system"][2]["materials"] = val
+            config["turbines"]["base_turbine"]["yaw_system"]["failures"][2]["materials"] = val
 
         if (val := inputs["rotor_blades_minor_repair_scale"]) > -1:
             config["turbines"]["base_turbine"]["rotor_blades"]["failures"][0]["scale"] = val
@@ -529,17 +526,17 @@ class WombatWisdem(om.ExplicitComponent):
         if (val := inputs["rotor_blades_minor_repair_materials"]) > -1:
             config["turbines"]["base_turbine"]["rotor_blades"]["failures"][0]["materials"] = val
         if (val := inputs["rotor_blades_major_repair_scale"]) > -1:
-            config["turbines"]["base_turbine"]["rotor_blades"][1]["scale"] = val
+            config["turbines"]["base_turbine"]["rotor_blades"]["failures"][1]["scale"] = val
         if (val := inputs["rotor_blades_major_repair_time"]) > -1:
-            config["turbines"]["base_turbine"]["rotor_blades"][1]["time"] = val
+            config["turbines"]["base_turbine"]["rotor_blades"]["failures"][1]["time"] = val
         if (val := inputs["rotor_blades_major_repair_materials"]) > -1:
-            config["turbines"]["base_turbine"]["rotor_blades"][1]["materials"] = val
+            config["turbines"]["base_turbine"]["rotor_blades"]["failures"][1]["materials"] = val
         if (val := inputs["rotor_blades_replacement_scale"]) > -1:
-            config["turbines"]["base_turbine"]["rotor_blades"][2]["scale"] = val
+            config["turbines"]["base_turbine"]["rotor_blades"]["failures"][2]["scale"] = val
         if (val := inputs["rotor_blades_replacement_time"]) > -1:
-            config["turbines"]["base_turbine"]["rotor_blades"][2]["time"] = val
+            config["turbines"]["base_turbine"]["rotor_blades"]["failures"][2]["time"] = val
         if (val := inputs["rotor_blades_replacement_materials"]) > -1:
-            config["turbines"]["base_turbine"]["rotor_blades"][2]["materials"] = val
+            config["turbines"]["base_turbine"]["rotor_blades"]["failures"][2]["materials"] = val
 
         if (val := inputs["generator_minor_repair_scale"]) > -1:
             config["turbines"]["base_turbine"]["generator"]["failures"][0]["scale"] = val
@@ -548,17 +545,17 @@ class WombatWisdem(om.ExplicitComponent):
         if (val := inputs["generator_minor_repair_materials"]) > -1:
             config["turbines"]["base_turbine"]["generator"]["failures"][0]["materials"] = val
         if (val := inputs["generator_major_repair_scale"]) > -1:
-            config["turbines"]["base_turbine"]["generator"][1]["scale"] = val
+            config["turbines"]["base_turbine"]["generator"]["failures"][1]["scale"] = val
         if (val := inputs["generator_major_repair_time"]) > -1:
-            config["turbines"]["base_turbine"]["generator"][1]["time"] = val
+            config["turbines"]["base_turbine"]["generator"]["failures"][1]["time"] = val
         if (val := inputs["generator_major_repair_materials"]) > -1:
-            config["turbines"]["base_turbine"]["generator"][1]["materials"] = val
+            config["turbines"]["base_turbine"]["generator"]["failures"][1]["materials"] = val
         if (val := inputs["generator_replacement_scale"]) > -1:
-            config["turbines"]["base_turbine"]["generator"][2]["scale"] = val
+            config["turbines"]["base_turbine"]["generator"]["failures"][2]["scale"] = val
         if (val := inputs["generator_replacement_time"]) > -1:
-            config["turbines"]["base_turbine"]["generator"][2]["time"] = val
+            config["turbines"]["base_turbine"]["generator"]["failures"][2]["time"] = val
         if (val := inputs["generator_replacement_materials"]) > -1:
-            config["turbines"]["base_turbine"]["generator"][2]["materials"] = val
+            config["turbines"]["base_turbine"]["generator"]["failures"][2]["materials"] = val
 
         if (val := inputs["drive_train_minor_repair_scale"]) > -1:
             config["turbines"]["base_turbine"]["drive_train"]["failures"][0]["scale"] = val
@@ -567,17 +564,17 @@ class WombatWisdem(om.ExplicitComponent):
         if (val := inputs["drive_train_minor_repair_materials"]) > -1:
             config["turbines"]["base_turbine"]["drive_train"]["failures"][0]["materials"] = val
         if (val := inputs["drive_train_major_repair_scale"]) > -1:
-            config["turbines"]["base_turbine"]["drive_train"][1]["scale"] = val
+            config["turbines"]["base_turbine"]["drive_train"]["failures"][1]["scale"] = val
         if (val := inputs["drive_train_major_repair_time"]) > -1:
-            config["turbines"]["base_turbine"]["drive_train"][1]["time"] = val
+            config["turbines"]["base_turbine"]["drive_train"]["failures"][1]["time"] = val
         if (val := inputs["drive_train_major_repair_materials"]) > -1:
-            config["turbines"]["base_turbine"]["drive_train"][1]["materials"] = val
+            config["turbines"]["base_turbine"]["drive_train"]["failures"][1]["materials"] = val
         if (val := inputs["drive_train_replacement_scale"]) > -1:
-            config["turbines"]["base_turbine"]["drive_train"][2]["scale"] = val
+            config["turbines"]["base_turbine"]["drive_train"]["failures"][2]["scale"] = val
         if (val := inputs["drive_train_replacement_time"]) > -1:
-            config["turbines"]["base_turbine"]["drive_train"][2]["time"] = val
+            config["turbines"]["base_turbine"]["drive_train"]["failures"][2]["time"] = val
         if (val := inputs["drive_train_replacement_materials"]) > -1:
-            config["turbines"]["base_turbine"]["drive_train"][2]["materials"] = val
+            config["turbines"]["base_turbine"]["drive_train"]["failures"][2]["materials"] = val
 
         if scenario == "floating":
             if (val := inputs["anchor_minor_repair_scale"]) > -1:
@@ -587,17 +584,17 @@ class WombatWisdem(om.ExplicitComponent):
             if (val := inputs["anchor_minor_repair_materials"]) > -1:
                 config["turbines"]["base_turbine"]["anchor"]["failures"][0]["materials"] = val
             if (val := inputs["anchor_major_repair_scale"]) > -1:
-                config["turbines"]["base_turbine"]["anchor"][1]["scale"] = val
+                config["turbines"]["base_turbine"]["anchor"]["failures"][1]["scale"] = val
             if (val := inputs["anchor_major_repair_time"]) > -1:
-                config["turbines"]["base_turbine"]["anchor"][1]["time"] = val
+                config["turbines"]["base_turbine"]["anchor"]["failures"][1]["time"] = val
             if (val := inputs["anchor_major_repair_materials"]) > -1:
-                config["turbines"]["base_turbine"]["anchor"][1]["materials"] = val
+                config["turbines"]["base_turbine"]["anchor"]["failures"][1]["materials"] = val
             if (val := inputs["anchor_replacement_scale"]) > -1:
-                config["turbines"]["base_turbine"]["anchor"][2]["scale"] = val
+                config["turbines"]["base_turbine"]["anchor"]["failures"][2]["scale"] = val
             if (val := inputs["anchor_replacement_time"]) > -1:
-                config["turbines"]["base_turbine"]["anchor"][2]["time"] = val
+                config["turbines"]["base_turbine"]["anchor"]["failures"][2]["time"] = val
             if (val := inputs["anchor_replacement_materials"]) > -1:
-                config["turbines"]["base_turbine"]["anchor"][2]["materials"] = val
+                config["turbines"]["base_turbine"]["anchor"]["failures"][2]["materials"] = val
             
             if (val := inputs["mooring_lines_minor_repair_scale"]) > -1:
                 config["turbines"]["base_turbine"]["mooring_lines"]["failures"][0]["scale"] = val
@@ -606,23 +603,23 @@ class WombatWisdem(om.ExplicitComponent):
             if (val := inputs["mooring_lines_minor_repair_materials"]) > -1:
                 config["turbines"]["base_turbine"]["mooring_lines"]["failures"][0]["materials"] = val
             if (val := inputs["mooring_lines_major_repair_scale"]) > -1:
-                config["turbines"]["base_turbine"]["mooring_lines"][1]["scale"] = val
+                config["turbines"]["base_turbine"]["mooring_lines"]["failures"][1]["scale"] = val
             if (val := inputs["mooring_lines_major_repair_time"]) > -1:
-                config["turbines"]["base_turbine"]["mooring_lines"][1]["time"] = val
+                config["turbines"]["base_turbine"]["mooring_lines"]["failures"][1]["time"] = val
             if (val := inputs["mooring_lines_major_repair_materials"]) > -1:
-                config["turbines"]["base_turbine"]["mooring_lines"][1]["materials"] = val
+                config["turbines"]["base_turbine"]["mooring_lines"]["failures"][1]["materials"] = val
             if (val := inputs["mooring_lines_replacement_scale"]) > -1:
-                config["turbines"]["base_turbine"]["mooring_lines"][2]["scale"] = val
+                config["turbines"]["base_turbine"]["mooring_lines"]["failures"][2]["scale"] = val
             if (val := inputs["mooring_lines_replacement_time"]) > -1:
-                config["turbines"]["base_turbine"]["mooring_lines"][2]["time"] = val
+                config["turbines"]["base_turbine"]["mooring_lines"]["failures"][2]["time"] = val
             if (val := inputs["mooring_lines_replacement_materials"]) > -1:
-                config["turbines"]["base_turbine"]["mooring_lines"][2]["materials"] = val
+                config["turbines"]["base_turbine"]["mooring_lines"]["failures"][2]["materials"] = val
             if (val := inputs["mooring_lines_buoyancy_module_replacement_replacement_scale"]) > -1:
-                config["turbines"]["base_turbine"]["mooring_lines_buoyancy_module_replacement"][3]["scale"] = val
+                config["turbines"]["base_turbine"]["mooring_lines_buoyancy_module_replacement"]["failures"][3]["scale"] = val
             if (val := inputs["mooring_lines_buoyancy_module_replacement_replacement_time"]) > -1:
-                config["turbines"]["base_turbine"]["mooring_lines_buoyancy_module_replacement"][3]["time"] = val
+                config["turbines"]["base_turbine"]["mooring_lines_buoyancy_module_replacement"]["failures"][3]["time"] = val
             if (val := inputs["mooring_lines_buoyancy_module_replacement_replacement_materials"]) > -1:
-                config["turbines"]["base_turbine"]["mooring_lines_buoyancy_module_replacement"][3]["materials"] = val
+                config["turbines"]["base_turbine"]["mooring_lines_buoyancy_module_replacement"]["failures"][3]["materials"] = val
 
         return config
 
