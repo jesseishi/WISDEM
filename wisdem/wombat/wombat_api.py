@@ -650,15 +650,15 @@ class WombatWisdem(om.ExplicitComponent):
         
         # TODO: Do we need individual vessel/vehicle breakdowns?
         # TODO: are dataframe outputs ok, or different type?
-        outputs["equipment_cost_breakdown"] = metrics.equipment_costs(frequency="project", by_equipment=False)
-        outputs["equipment_utilization_rate"] =  metrics.service_equipment_utilization(frequency="project")
-        outputs["equipment_dispatch_summary"] = metrics.dispatch_summary(frequency="project")
+        discrete_outputs["equipment_cost_breakdown"] = metrics.equipment_costs(frequency="project", by_equipment=False)
+        discrete_outputs["equipment_utilization_rate"] =  metrics.service_equipment_utilization(frequency="project")
+        discrete_outputs["equipment_dispatch_summary"] = metrics.dispatch_summary(frequency="project")
         
-        outputs["vessel_crew_hours_at_sea"] = metrics.vessel_crew_hours_at_sea(frequency="project", by_equipment=True)
-        outputs["total_tows"] = metrics.number_of_tows(frequency="project")
+        discrete_outputs["vessel_crew_hours_at_sea"] = metrics.vessel_crew_hours_at_sea(frequency="project", by_equipment=True)
+        discrete_outputs["total_tows"] = metrics.number_of_tows(frequency="project")
         outputs["direct_labor"] = metrics.labor_costs(frequency="project", by_type=False)
-        outputs["materials_by_subassembly"] = metrics.component_costs(frequency="project", by_category=False, by_action=False)
-        outputs["total_materials"] = outputs["materials_by_subassembly"].values.sum()
+        discrete_outputs["materials_by_subassembly"] = metrics.component_costs(frequency="project", by_category=False, by_action=False)
+        outputs["total_materials"] = discrete_outputs["materials_by_subassembly"].values.sum()
         
         fixed_costs = metrics.project_fixed_costs(frequency="project", resolution="medium")
         outputs["indirect_labor"] = fixed_costs[["labor"]].squeeze()
