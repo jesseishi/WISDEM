@@ -5,7 +5,7 @@ from warnings import warn
 
 import openmdao.api as om
 from wombat import Simulation
-from wombat.core.library import DEFAULT_DATA, load_yaml, load_weather
+from wombat.core.library import DEFAULT_DATA, load_yaml, read_weather_csv
 
 
 class Wombat(om.Group):
@@ -72,7 +72,7 @@ class WombatWisdem(om.ExplicitComponent):
                 "base_export": load_yaml(DEFAULT_DATA / "cables", "osw_export.yaml"),
             }
             config["turbines"] = {"base_turbine": load_yaml(DEFAULT_DATA / "turbines", "12MW_osw_fixed.yaml")}
-            config["weather"] = load_weather(DEFAULT_DATA / "weather/era5_40.0N_72.5W_1990_2020.csv")[["datetime", "windspeed", "waveheight"]]
+            config["weather"] = read_weather_csv(DEFAULT_DATA / "weather/era5_40.0N_72.5W_1990_2020.csv")[["datetime", "windspeed", "waveheight"]]
             config["end_year"] = 2020      
         elif scenario == "floating":
             config = load_yaml(DEFAULT_DATA / "project/config", "base_osw_floating.yaml")
@@ -90,7 +90,7 @@ class WombatWisdem(om.ExplicitComponent):
             }
             config["turbines"] = {"base_turbine": load_yaml(DEFAULT_DATA / "turbines", "12MW_osw_floating.yaml")}
             config["port"] = load_yaml(DEFAULT_DATA / "project/port", "base_port.yaml")
-            config["weather"] = load_weather(DEFAULT_DATA / "weather/era5_41.0N_125.0W_1989_2019.csv")[["datetime", "windspeed", "waveheight"]]
+            config["weather"] = read_weather_csv(DEFAULT_DATA / "weather/era5_41.0N_125.0W_1989_2019.csv")[["datetime", "windspeed", "waveheight"]]
             config["end_year"] = 2019
         else:
             raise NotImplementedError("No land-based default data available for OpEx calculations.")
