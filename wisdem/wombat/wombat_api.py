@@ -383,7 +383,8 @@ class WombatWisdem(om.ExplicitComponent):
         config["workday_end"] = discrete_inputs["workday_end"]
         config["project_capacity"] = inputs["project_capacity"]
         config["port_distance"] = inputs["equipment_dispatch_distance"]
-        config["maintenance_start"] = f'{discrete_inputs["maintenance_start"]}/{config["start_year"]}'
+        if (start := config["maintenance_start"]) is not None:
+            config["maintenance_start"] = f'{start}/{config["start_year"]}'
         config["non_operational_start"] = discrete_inputs["non_operational_start"]
         config["non_operational_end"] = discrete_inputs["non_operational_end"]
         config["reduced_speed_start"] = discrete_inputs["reduced_speed_start"]
