@@ -633,7 +633,7 @@ class WombatWisdem(om.ExplicitComponent):
 
         metrics = sim.metrics
         frequency = "project"
-        capacity_kW = sim.project_capacity * 1000
+        capacity_kW = metrics.project_capacity * 1000
 
         opex = metrics.opex(frequency, by_category=True)
         outputs["total_opex"] = opex.OpEx
