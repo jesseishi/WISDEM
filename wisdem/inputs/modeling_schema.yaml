@@ -472,13 +472,6 @@ properties:
                 default: {}
                 properties:
                     flag: *flag
-                    years:
-                        type: number
-                        description: Number of years to simulation the operations and maintenance phase of the farm lifecycle
-                        units: years
-                        minimum: 1
-                        maximum: 40
-                        default: 20
                     workday_start:
                         type: number
                         description: Hour of the day where any work-related activities begin

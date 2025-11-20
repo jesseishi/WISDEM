@@ -37,10 +37,9 @@ WISDEM:
         installation_plan_cost: 1e6
     OpEx:
         flag: True
-        years: 20
         workday_start: 7
         workday_end: 19
-        equipment_dispatch_distance: 50
+        equipment_dispatch_distance: 50  # TODO: check with orbit
         n_ctv: 3
         maintenance_start: None
         non_operational_start: None
@@ -59,14 +58,8 @@ WISDEM:
         port_workday_end: 18
         n_port_crews: 2
         max_port_operations: 2
-        repair_port_distance: 116
-        # TODO: random seed or generator input?
-        # NOTES
-        # Fields excluded from user input that will always use the WOMBAT defaults
-        # - project fixed costs
-        # - repair port access and use fees
-        # - number of vessels that aren't related to heavy lift/at-port repair equipment or basic repairs
-        # - at-port repair crew costs
+        repair_port_distance: 116  # TODO: check with orbit
+        random_seed: 42  # TODO: connect this
     LCOE:
         flag: True
         wake_loss_factor: 0.15
