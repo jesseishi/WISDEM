@@ -328,6 +328,7 @@ class WindTurbineOntologyOpenMDAO(om.Group):
             opex_ivc.add_discrete_output("reduced_speed_start", None, desc="Starting date, in MM/DD format, for an annual period where traveling speed is reduced")
             opex_ivc.add_discrete_output("reduced_speed_end", None, desc="Ending date, in MM/DD format, for an annual period where traveling speed is reduced")
             opex_ivc.add_output("reduced_speed", 0, units="km/h", desc="Reduced speed applied to servicing equipment in the reduced speed period")
+            opex_ivc.add_discrete_output("random_seed", 42, desc="Random seed for the internal random generator")
 
         # Cost analysis inputs
         if modeling_options["flags"]["costs"]:

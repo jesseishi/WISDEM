@@ -24,7 +24,7 @@ WISDEM:
         distance_to_substation: 1.0
         distance_to_interconnection: 8.5
         interconnect_voltage: 130.
-        distance_to_site: 115.
+        distance_to_site: 115.  # TODO: check on updated COWER asumptions
         distance_to_landfall: 50.
         port_cost_per_month: 2e6
         review_cost: 0.0

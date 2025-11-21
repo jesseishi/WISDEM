@@ -1068,6 +1068,7 @@ class WindPark(om.Group):
             self.connect("opex.reduced_speed_start", "wombat.reduced_speed_start")
             self.connect("opex.reduced_speed_end", "wombat.reduced_speed_end")
             self.connect("opex.reduced_speed", "wombat.reduced_speed")
+            self.connect("opex.random_seed", "wombat.random_seed")
             self.connect("tcc.turbine_cost_kW", "wombat.turbine_capex_kw")
             self.connect("configuration.rated_power", "wombat.turbine_capacity")
             self.connect("orbit.layout", "wombat.layout")

@@ -1,8 +1,5 @@
 """Provides WISDEM's WOMBAT API."""
 
-
-from warnings import warn
-
 import openmdao.api as om
 from wombat import Simulation
 from wombat.core.library import DEFAULT_DATA, load_yaml, read_weather_csv
@@ -116,6 +113,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("project_capacity", 0, units="MW", desc="Total wind farm capacity")
         self.add_input("turbine_capex_kw", 0, units="USD/kW", desc="Turbine CapEx per kW of nameplate capacity")
         self.add_input("turbine_capacity", 0, units="W", desc="Turbine nameplate capacity")
+        self.add_discrete_input("random_seed", 42, desc="Random seed for the internal random generator")
 
         self.add_discrete_input("layout", None, desc="Tabular wind farm layout generated from ORBIT")
         
@@ -373,12 +371,31 @@ class WombatWisdem(om.ExplicitComponent):
         config["workday_end"] = discrete_inputs["workday_end"]
         config["project_capacity"] = inputs["project_capacity"][0]
         config["port_distance"] = inputs["equipment_dispatch_distance"][0]
-        if (start := discrete_inputs["maintenance_start"]) is not None:
+        start = discrete_inputs["maintenance_start"]
+        start = None if start == "None" else start
+        if start is not None:
             config["maintenance_start"] = f'{start}/{config["start_year"]}'
-        config["non_operational_start"] = discrete_inputs["non_operational_start"]
-        config["non_operational_end"] = discrete_inputs["non_operational_end"]
-        config["reduced_speed_start"] = discrete_inputs["reduced_speed_start"]
-        config["reduced_speed_end"] = discrete_inputs["reduced_speed_end"]
+        
+        start = discrete_inputs["non_operational_start"]
+        start = None if start == "None" else start
+        config["non_operational_start"] = start
+        
+        start = discrete_inputs["non_operational_start"]
+        start = None if start == "None" else start
+        config["non_operational_start"] = start
+        
+        end = discrete_inputs["non_operational_end"]
+        end = None if end == "None" else end
+        config["non_operational_end"] = end
+        
+        start = discrete_inputs["reduced_speed_start"]
+        start = None if start == "None" else start
+        config["reduced_speed_start"] = start
+        
+        end = discrete_inputs["reduced_speed_end"]
+        end = None if end == "None" else end
+        config["reduced_speed_end"] = end
+        
         config["reduced_speed"] = inputs["reduced_speed"][0]
         
         if scenario == "floating":
@@ -405,8 +422,7 @@ class WombatWisdem(om.ExplicitComponent):
             raise NotImplementedError("No default land-based OpEx data available for simulation.")
 
         config["start_year"] = config["end_year"] - int(inputs["years"][0]) + 1
-        
-        config["random_seed"] = 42
+        config["random_seed"] = discrete_inputs["random_seed"]
         
         # TODO: determine if additional  turbines should be allowed
         # config["turbines"] |= inputs["turbines"]

@@ -581,6 +581,13 @@ properties:
                         minimum: 0
                         maximum: 100
                         default: 0
+                    random_seed:
+                        type: number
+                        description: Random seed for the internal random generator
+                        units: "none"
+                        minimum: 1
+                        maximum: 4294967295
+                        default: 42
 
             FloatingSE:
                 type: object
