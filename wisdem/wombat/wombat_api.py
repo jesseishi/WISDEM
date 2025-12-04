@@ -11,7 +11,7 @@ class Wombat(om.Group):
     def initialize(self):
         """Initializes the API connections."""
         self.options.declare("scenario", default="fixed")  # NOTE: config file without the extension
-        
+
     def setup(self):
         """Define all input variables from all models."""
 
@@ -22,7 +22,7 @@ class Wombat(om.Group):
         self.set_input_defaults("project_capacity", None, units="MW")
         self.set_input_defaults("turbine_capex_kw", None, units="USD/kW")
         self.set_input_defaults("turbine_capacity", None, units="MW")
-        
+
         self.add_subsystem(
             "wombat",
             WombatWisdem(
@@ -43,10 +43,10 @@ class WombatWisdem(om.ExplicitComponent):
         scenario = self.options["scenario"]
         if scenario == "land":
             raise NotImplementedError("No default land-based data is available for WOMBAT.")
-        
+
         if scenario == "fixed":
             config = load_yaml(DEFAULT_DATA / "project/config", "base_osw_fixed.yaml")
-                
+
             config["vessels"] = {
                 "ctv": load_yaml(DEFAULT_DATA / "vessels", "ctv.yaml"),
                 "hlv": load_yaml(DEFAULT_DATA / "vessels", "hlv.yaml"),
@@ -60,8 +60,10 @@ class WombatWisdem(om.ExplicitComponent):
                 "base_export": load_yaml(DEFAULT_DATA / "cables", "osw_export.yaml"),
             }
             config["turbines"] = {"base_turbine": load_yaml(DEFAULT_DATA / "turbines", "12MW_osw_fixed.yaml")}
-            config["weather"] = read_weather_csv(DEFAULT_DATA / "weather/era5_40.0N_72.5W_1990_2020.csv")[["datetime", "windspeed", "waveheight"]]
-            config["end_year"] = 2020      
+            config["weather"] = read_weather_csv(DEFAULT_DATA / "weather/era5_40.0N_72.5W_1990_2020.csv")[
+                ["datetime", "windspeed", "waveheight"]
+            ]
+            config["end_year"] = 2020
         elif scenario == "floating":
             config = load_yaml(DEFAULT_DATA / "project/config", "base_osw_floating.yaml")
             config["vessels"] = {
@@ -78,11 +80,13 @@ class WombatWisdem(om.ExplicitComponent):
             }
             config["turbines"] = {"base_turbine": load_yaml(DEFAULT_DATA / "turbines", "12MW_osw_floating.yaml")}
             config["port"] = load_yaml(DEFAULT_DATA / "project/port", "base_port.yaml")
-            config["weather"] = read_weather_csv(DEFAULT_DATA / "weather/era5_41.0N_125.0W_1989_2019.csv")[["datetime", "windspeed", "waveheight"]]
+            config["weather"] = read_weather_csv(DEFAULT_DATA / "weather/era5_41.0N_125.0W_1989_2019.csv")[
+                ["datetime", "windspeed", "waveheight"]
+            ]
             config["end_year"] = 2019
         else:
             raise NotImplementedError("No land-based default data available for OpEx calculations.")
-        
+
         config["name"] = "wisdem_wombat"
         config["layout_coords"] = "distance"
         return config
@@ -91,131 +95,420 @@ class WombatWisdem(om.ExplicitComponent):
         """Define all the inputs."""
 
         self._wombat_config = self.load_scenario_config()
-        
-        self.add_input("years", 20, units="yr", desc="Number of years to simulation the operations and maintenance phase of the farm lifecycle")
+
+        self.add_input(
+            "years",
+            20,
+            units="yr",
+            desc="Number of years to simulation the operations and maintenance phase of the farm lifecycle",
+        )
         self.add_discrete_input("workday_start", 7, desc="Hour of the day where any work-related activities begin")
         self.add_discrete_input("workday_end", 19, desc="Hour of the day where any work-related activities end")
-        self.add_input("equipment_dispatch_distance", 50, units="km", desc="Distance, in km, that servicing equipment must travel daily to reach the wind farm")
-        self.add_discrete_input("n_ctv", 3, desc="Number of crew transfer vessels that should be made available to the wind farm.")
-        self.add_discrete_input("n_hlv", 1, desc="Number of heavy lift vessels that should be made available to the wind farm (fixed-bottom simulations only)")
-        self.add_discrete_input("n_tugboat", 2, desc="Number of tugboat groups that should be available to the port to tow floating turbines to port and back")
-        self.add_discrete_input("port_workday_start", 6, desc="Hour of the day where any work-related activities begin for port-side repairs")
-        self.add_discrete_input("port_workday_end", 18, desc="Hour of the day where any work-related activities end for port-side repairs")
-        self.add_discrete_input("n_port_crews", 2, desc="Number of port-side crews available to work on simultaneous repairs for any at-port turbine")
+        self.add_input(
+            "equipment_dispatch_distance",
+            50,
+            units="km",
+            desc="Distance, in km, that servicing equipment must travel daily to reach the wind farm",
+        )
+        self.add_discrete_input(
+            "n_ctv", 3, desc="Number of crew transfer vessels that should be made available to the wind farm."
+        )
+        self.add_discrete_input(
+            "n_hlv",
+            1,
+            desc="Number of heavy lift vessels that should be made available to the wind farm (fixed-bottom simulations only)",
+        )
+        self.add_discrete_input(
+            "n_tugboat",
+            2,
+            desc="Number of tugboat groups that should be available to the port to tow floating turbines to port and back",
+        )
+        self.add_discrete_input(
+            "port_workday_start",
+            6,
+            desc="Hour of the day where any work-related activities begin for port-side repairs",
+        )
+        self.add_discrete_input(
+            "port_workday_end", 18, desc="Hour of the day where any work-related activities end for port-side repairs"
+        )
+        self.add_discrete_input(
+            "n_port_crews",
+            2,
+            desc="Number of port-side crews available to work on simultaneous repairs for any at-port turbine",
+        )
         self.add_discrete_input("max_port_operations", 2, desc="Number of turbines that can be at port at once")
-        self.add_input("repair_port_distance", 116, units="km", desc="Distance, in km, that tugboats must travel to reach the wind farm for tow-to-port repairs")
-        self.add_discrete_input("maintenance_start", None, desc="Date of first maintenance event to determine regular interval timing. Can be set to prior to the starting year to ensure staggered starts.")
-        self.add_discrete_input("non_operational_start", None, desc="Starting date, in MM/DD format, for an annual period where the site is inaccessible")
-        self.add_discrete_input("non_operational_end", None, desc="Ending date, in MM/DD format, for an annual period where the site is inaccessible")
-        self.add_discrete_input("reduced_speed_start", None, desc="Starting date, in MM/DD format, for an annual period where traveling speed is reduced")
-        self.add_discrete_input("reduced_speed_end", None, desc="Ending date, in MM/DD format, for an annual period where traveling speed is reduced")
-        self.add_input("reduced_speed", 0, units="km/h", desc="Reduced speed applied to servicing equipment in the reduced speed period")
+        self.add_input(
+            "repair_port_distance",
+            116,
+            units="km",
+            desc="Distance, in km, that tugboats must travel to reach the wind farm for tow-to-port repairs",
+        )
+        self.add_discrete_input(
+            "maintenance_start",
+            None,
+            desc="Date of first maintenance event to determine regular interval timing. Can be set to prior to the starting year to ensure staggered starts.",
+        )
+        self.add_discrete_input(
+            "non_operational_start",
+            None,
+            desc="Starting date, in MM/DD format, for an annual period where the site is inaccessible",
+        )
+        self.add_discrete_input(
+            "non_operational_end",
+            None,
+            desc="Ending date, in MM/DD format, for an annual period where the site is inaccessible",
+        )
+        self.add_discrete_input(
+            "reduced_speed_start",
+            None,
+            desc="Starting date, in MM/DD format, for an annual period where traveling speed is reduced",
+        )
+        self.add_discrete_input(
+            "reduced_speed_end",
+            None,
+            desc="Ending date, in MM/DD format, for an annual period where traveling speed is reduced",
+        )
+        self.add_input(
+            "reduced_speed",
+            0,
+            units="km/h",
+            desc="Reduced speed applied to servicing equipment in the reduced speed period",
+        )
         self.add_input("project_capacity", 0, units="MW", desc="Total wind farm capacity")
         self.add_input("turbine_capex_kw", 0, units="USD/kW", desc="Turbine CapEx per kW of nameplate capacity")
         self.add_input("turbine_capacity", 0, units="W", desc="Turbine nameplate capacity")
         self.add_discrete_input("random_seed", 42, desc="Random seed for the internal random generator")
 
         self.add_discrete_input("layout", None, desc="Tabular wind farm layout generated from ORBIT")
-        
+
         # Turbine modifications
         # All defaults are -1 to indicate the WOMBAT defaults will be used
-        self.add_input("power_converter_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
-        self.add_input("power_converter_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("power_converter_minor_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        self.add_input("power_converter_major_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
-        self.add_input("power_converter_major_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("power_converter_major_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        self.add_input("power_converter_replacement_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
+        self.add_input(
+            "power_converter_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
+        self.add_input(
+            "power_converter_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair"
+        )
+        self.add_input(
+            "power_converter_minor_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+        self.add_input(
+            "power_converter_major_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
+        self.add_input(
+            "power_converter_major_repair_time", -1, units="h", desc="Number of hours to complete the repair"
+        )
+        self.add_input(
+            "power_converter_major_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+        self.add_input(
+            "power_converter_replacement_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
         self.add_input("power_converter_replacement_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("power_converter_replacement_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        
-        self.add_input("electrical_system_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
-        self.add_input("electrical_system_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("electrical_system_minor_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        self.add_input("electrical_system_major_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
-        self.add_input("electrical_system_major_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("electrical_system_major_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        self.add_input("electrical_system_replacement_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
-        self.add_input("electrical_system_replacement_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("electrical_system_replacement_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        
-        self.add_input("hydraulic_pitch_system_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
-        self.add_input("hydraulic_pitch_system_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("hydraulic_pitch_system_minor_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        self.add_input("hydraulic_pitch_system_major_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
-        self.add_input("hydraulic_pitch_system_major_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("hydraulic_pitch_system_major_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        self.add_input("hydraulic_pitch_system_replacement_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
-        self.add_input("hydraulic_pitch_system_replacement_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("hydraulic_pitch_system_replacement_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        
-        self.add_input("ballast_pump_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
+        self.add_input(
+            "power_converter_replacement_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+
+        self.add_input(
+            "electrical_system_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
+        self.add_input(
+            "electrical_system_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair"
+        )
+        self.add_input(
+            "electrical_system_minor_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+        self.add_input(
+            "electrical_system_major_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
+        self.add_input(
+            "electrical_system_major_repair_time", -1, units="h", desc="Number of hours to complete the repair"
+        )
+        self.add_input(
+            "electrical_system_major_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+        self.add_input(
+            "electrical_system_replacement_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
+        self.add_input(
+            "electrical_system_replacement_time", -1, units="h", desc="Number of hours to complete the repair"
+        )
+        self.add_input(
+            "electrical_system_replacement_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+
+        self.add_input(
+            "hydraulic_pitch_system_minor_repair_scale",
+            -1,
+            units="unitless",
+            desc="1 / mean time between failure (years)",
+        )
+        self.add_input(
+            "hydraulic_pitch_system_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair"
+        )
+        self.add_input(
+            "hydraulic_pitch_system_minor_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+        self.add_input(
+            "hydraulic_pitch_system_major_repair_scale",
+            -1,
+            units="unitless",
+            desc="1 / mean time between failure (years)",
+        )
+        self.add_input(
+            "hydraulic_pitch_system_major_repair_time", -1, units="h", desc="Number of hours to complete the repair"
+        )
+        self.add_input(
+            "hydraulic_pitch_system_major_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+        self.add_input(
+            "hydraulic_pitch_system_replacement_scale",
+            -1,
+            units="unitless",
+            desc="1 / mean time between failure (years)",
+        )
+        self.add_input(
+            "hydraulic_pitch_system_replacement_time", -1, units="h", desc="Number of hours to complete the repair"
+        )
+        self.add_input(
+            "hydraulic_pitch_system_replacement_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+
+        self.add_input(
+            "ballast_pump_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
         self.add_input("ballast_pump_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("ballast_pump_minor_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        
-        self.add_input("yaw_system_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
+        self.add_input(
+            "ballast_pump_minor_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+
+        self.add_input(
+            "yaw_system_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
         self.add_input("yaw_system_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("yaw_system_minor_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        self.add_input("yaw_system_major_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
+        self.add_input(
+            "yaw_system_minor_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+        self.add_input(
+            "yaw_system_major_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
         self.add_input("yaw_system_major_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("yaw_system_major_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        self.add_input("yaw_system_replacement_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
+        self.add_input(
+            "yaw_system_major_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+        self.add_input(
+            "yaw_system_replacement_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
         self.add_input("yaw_system_replacement_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("yaw_system_replacement_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        
-        self.add_input("rotor_blades_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
+        self.add_input(
+            "yaw_system_replacement_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+
+        self.add_input(
+            "rotor_blades_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
         self.add_input("rotor_blades_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("rotor_blades_minor_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        self.add_input("rotor_blades_major_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
+        self.add_input(
+            "rotor_blades_minor_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+        self.add_input(
+            "rotor_blades_major_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
         self.add_input("rotor_blades_major_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("rotor_blades_major_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        self.add_input("rotor_blades_replacement_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
+        self.add_input(
+            "rotor_blades_major_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+        self.add_input(
+            "rotor_blades_replacement_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
         self.add_input("rotor_blades_replacement_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("rotor_blades_replacement_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        
-        self.add_input("generator_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
+        self.add_input(
+            "rotor_blades_replacement_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+
+        self.add_input(
+            "generator_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
         self.add_input("generator_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("generator_minor_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        self.add_input("generator_major_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
+        self.add_input(
+            "generator_minor_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+        self.add_input(
+            "generator_major_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
         self.add_input("generator_major_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("generator_major_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        self.add_input("generator_replacement_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
+        self.add_input(
+            "generator_major_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+        self.add_input(
+            "generator_replacement_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
         self.add_input("generator_replacement_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("generator_replacement_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        
-        self.add_input("drive_train_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
+        self.add_input(
+            "generator_replacement_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+
+        self.add_input(
+            "drive_train_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
         self.add_input("drive_train_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("drive_train_minor_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        self.add_input("drive_train_major_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
+        self.add_input(
+            "drive_train_minor_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+        self.add_input(
+            "drive_train_major_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
         self.add_input("drive_train_major_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("drive_train_major_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        self.add_input("drive_train_replacement_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
+        self.add_input(
+            "drive_train_major_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+        self.add_input(
+            "drive_train_replacement_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
         self.add_input("drive_train_replacement_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("drive_train_replacement_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        
+        self.add_input(
+            "drive_train_replacement_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+
         self.add_input("anchor_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
         self.add_input("anchor_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("anchor_minor_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
+        self.add_input(
+            "anchor_minor_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
         self.add_input("anchor_major_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
         self.add_input("anchor_major_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("anchor_major_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
+        self.add_input(
+            "anchor_major_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
         self.add_input("anchor_replacement_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
         self.add_input("anchor_replacement_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("anchor_replacement_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        
-        self.add_input("mooring_lines_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
-        self.add_input("mooring_lines_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("mooring_lines_minor_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        self.add_input("mooring_lines_major_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
-        self.add_input("mooring_lines_major_repair_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("mooring_lines_major_repair_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        self.add_input("mooring_lines_replacement_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
-        self.add_input("mooring_lines_replacement_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("mooring_lines_replacement_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
-        self.add_input("mooring_lines_buoyancy_module_replacement_scale", -1, units="unitless", desc="1 / mean time between failure (years)")
-        self.add_input("mooring_lines_buoyancy_module_replacement_time", -1, units="h", desc="Number of hours to complete the repair")
-        self.add_input("mooring_lines_buoyancy_module_replacement_materials", 1, units="USD", desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.")
+        self.add_input(
+            "anchor_replacement_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
 
+        self.add_input(
+            "mooring_lines_minor_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
+        self.add_input("mooring_lines_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair")
+        self.add_input(
+            "mooring_lines_minor_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+        self.add_input(
+            "mooring_lines_major_repair_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
+        self.add_input("mooring_lines_major_repair_time", -1, units="h", desc="Number of hours to complete the repair")
+        self.add_input(
+            "mooring_lines_major_repair_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+        self.add_input(
+            "mooring_lines_replacement_scale", -1, units="unitless", desc="1 / mean time between failure (years)"
+        )
+        self.add_input("mooring_lines_replacement_time", -1, units="h", desc="Number of hours to complete the repair")
+        self.add_input(
+            "mooring_lines_replacement_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
+        self.add_input(
+            "mooring_lines_buoyancy_module_replacement_scale",
+            -1,
+            units="unitless",
+            desc="1 / mean time between failure (years)",
+        )
+        self.add_input(
+            "mooring_lines_buoyancy_module_replacement_time",
+            -1,
+            units="h",
+            desc="Number of hours to complete the repair",
+        )
+        self.add_input(
+            "mooring_lines_buoyancy_module_replacement_materials",
+            1,
+            units="USD",
+            desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
+        )
 
         # Outputs
         self.add_output(
@@ -223,8 +516,7 @@ class WombatWisdem(om.ExplicitComponent):
             0.0,
             units="USD",
             desc=(
-                "Total operational expenditure (fixed costs, port fees, labor, servicing"
-                " equipment, and materials)"
+                "Total operational expenditure (fixed costs, port fees, labor, servicing" " equipment, and materials)"
             ),
         )
         self.add_output(
@@ -248,17 +540,12 @@ class WombatWisdem(om.ExplicitComponent):
             units="USD",
             desc="Direct cost for renting and operating servicing equipment",
         )
-        self.add_output(
-            "time_availability",
-            0.0,
-            units="unitless",
-            desc="Project-level uptime based on time."
-        )
+        self.add_output("time_availability", 0.0, units="unitless", desc="Project-level uptime based on time.")
         self.add_output(
             "energy_availability",
             0.0,
             units="unitless",
-            desc="Project-level uptime based on capacity to produce energy."
+            desc="Project-level uptime based on capacity to produce energy.",
         )
         self.add_output(
             "net_capacity_factor",
@@ -365,15 +652,16 @@ class WombatWisdem(om.ExplicitComponent):
         """Creates the WOMBAT layout DataFrame from the ORBIT outputs."""
         layout = discrete_inputs["layout"]
         layout[["type", "subassembly", "upstream_cable"]] = ["turbine", "base_turbine", "base_array"]
-        layout.loc[
-            layout.id.isin(layout.substation_id),
-            ["type", "subassembly", "upstream_cable"]
-        ] = ["substation", "base_substation", "base_export"]
+        layout.loc[layout.id.isin(layout.substation_id), ["type", "subassembly", "upstream_cable"]] = [
+            "substation",
+            "base_substation",
+            "base_export",
+        ]
         return layout
 
     def compile_inputs(self, inputs, outputs, discrete_inputs, discrete_outputs):
         """Creates the WOMBAT configuration file."""
-        
+
         scenario = self.options["scenario"]
         config = self._wombat_config
         config["layout"] = self.create_layout(inputs, outputs, discrete_inputs, discrete_outputs)
@@ -385,29 +673,29 @@ class WombatWisdem(om.ExplicitComponent):
         start = None if start == "None" else start
         if start is not None:
             config["maintenance_start"] = f'{start}/{config["start_year"]}'
-        
+
         start = discrete_inputs["non_operational_start"]
         start = None if start == "None" else start
         config["non_operational_start"] = start
-        
+
         start = discrete_inputs["non_operational_start"]
         start = None if start == "None" else start
         config["non_operational_start"] = start
-        
+
         end = discrete_inputs["non_operational_end"]
         end = None if end == "None" else end
         config["non_operational_end"] = end
-        
+
         start = discrete_inputs["reduced_speed_start"]
         start = None if start == "None" else start
         config["reduced_speed_start"] = start
-        
+
         end = discrete_inputs["reduced_speed_end"]
         end = None if end == "None" else end
         config["reduced_speed_end"] = end
-        
+
         config["reduced_speed"] = inputs["reduced_speed"][0]
-        
+
         if scenario == "floating":
             config["service_equipment"] = [
                 [discrete_inputs["n_ctv"], "ctv"],
@@ -433,13 +721,13 @@ class WombatWisdem(om.ExplicitComponent):
 
         config["start_year"] = config["end_year"] - int(inputs["years"][0]) + 1
         config["random_seed"] = discrete_inputs["random_seed"]
-        
+
         # TODO: determine if additional  turbines should be allowed
         # config["turbines"] |= inputs["turbines"]
-        
+
         original_capacity = config["turbines"]["base_turbine"]["capacity_kw"]
         original_capex = config["turbines"]["base_turbine"]["capex_kw"]
-        config["turbines"]["base_turbine"]["capacity_kw"] = inputs["turbine_capacity"][0]/ 1000.0
+        config["turbines"]["base_turbine"]["capacity_kw"] = inputs["turbine_capacity"][0] / 1000.0
         config["turbines"]["base_turbine"]["capex_kw"] = inputs["turbine_capex_kw"][0]
 
         turbine_capex = original_capacity * original_capex
@@ -612,7 +900,7 @@ class WombatWisdem(om.ExplicitComponent):
                 config["turbines"]["base_turbine"]["anchor"]["failures"][2]["time"] = val
             if (val := inputs["anchor_replacement_materials"][0]) > -1:
                 config["turbines"]["base_turbine"]["anchor"]["failures"][2]["materials"] = val
-            
+
             if (val := inputs["mooring_lines_minor_repair_scale"][0]) > -1:
                 config["turbines"]["base_turbine"]["mooring_lines"]["failures"][0]["scale"] = val
             if (val := inputs["mooring_lines_minor_repair_time"][0]) > -1:
@@ -632,11 +920,17 @@ class WombatWisdem(om.ExplicitComponent):
             if (val := inputs["mooring_lines_replacement_materials"][0]) > -1:
                 config["turbines"]["base_turbine"]["mooring_lines"]["failures"][2]["materials"] = val
             if (val := inputs["mooring_lines_buoyancy_module_replacement_replacement_scale"][0]) > -1:
-                config["turbines"]["base_turbine"]["mooring_lines_buoyancy_module_replacement"]["failures"][3]["scale"] = val
+                config["turbines"]["base_turbine"]["mooring_lines_buoyancy_module_replacement"]["failures"][3][
+                    "scale"
+                ] = val
             if (val := inputs["mooring_lines_buoyancy_module_replacement_replacement_time"][0]) > -1:
-                config["turbines"]["base_turbine"]["mooring_lines_buoyancy_module_replacement"]["failures"][3]["time"] = val
+                config["turbines"]["base_turbine"]["mooring_lines_buoyancy_module_replacement"]["failures"][3][
+                    "time"
+                ] = val
             if (val := inputs["mooring_lines_buoyancy_module_replacement_replacement_materials"][0]) > -1:
-                config["turbines"]["base_turbine"]["mooring_lines_buoyancy_module_replacement"]["failures"][3]["materials"] = val
+                config["turbines"]["base_turbine"]["mooring_lines_buoyancy_module_replacement"]["failures"][3][
+                    "materials"
+                ] = val
 
         return config
 
@@ -654,33 +948,49 @@ class WombatWisdem(om.ExplicitComponent):
         opex = metrics.opex(frequency, by_category=True)
         outputs["total_opex"] = opex.OpEx
         outputs["annual_opex_per_kW"] = outputs["total_opex"] / capacity_kW / sim.env.simulation_years
-        
+
         outputs["time_availability"] = metrics.time_based_availability(frequency="project", by="windfarm").squeeze()
-        outputs["energy_availability"] = metrics.production_based_availability(frequency="project", by="windfarm").squeeze()
-        outputs["net_capacity_factor"] = metrics.capacity_factor(which="net", frequency="project", by="windfarm").squeeze()
-        outputs["gross_capacity_factor"] = metrics.capacity_factor(which="gross", frequency="project", by="windfarm").squeeze()
-        outputs["scheduled_task_completion_rate"] = metrics.task_completion_rate(which="scheduled", frequency="project").squeeze()
-        outputs["unscheduled_task_completion_rate"] = metrics.task_completion_rate(which="unscheduled", frequency="project").squeeze()
-        outputs["combined_task_completion_rate"] = metrics.task_completion_rate(which="both", frequency="project").squeeze()
+        outputs["energy_availability"] = metrics.production_based_availability(
+            frequency="project", by="windfarm"
+        ).squeeze()
+        outputs["net_capacity_factor"] = metrics.capacity_factor(
+            which="net", frequency="project", by="windfarm"
+        ).squeeze()
+        outputs["gross_capacity_factor"] = metrics.capacity_factor(
+            which="gross", frequency="project", by="windfarm"
+        ).squeeze()
+        outputs["scheduled_task_completion_rate"] = metrics.task_completion_rate(
+            which="scheduled", frequency="project"
+        ).squeeze()
+        outputs["unscheduled_task_completion_rate"] = metrics.task_completion_rate(
+            which="unscheduled", frequency="project"
+        ).squeeze()
+        outputs["combined_task_completion_rate"] = metrics.task_completion_rate(
+            which="both", frequency="project"
+        ).squeeze()
         outputs["total_equipment_cost"] = metrics.equipment_costs(frequency="project", by_equipment=False).squeeze()
-        
+
         # TODO: Do we need individual vessel/vehicle breakdowns?
         # TODO: Create attributes for data frame breakdowns rather than make them openmdao outputs
         discrete_outputs["equipment_cost_breakdown"] = metrics.equipment_costs(frequency="project", by_equipment=False)
-        discrete_outputs["equipment_utilization_rate"] =  metrics.service_equipment_utilization(frequency="project")
+        discrete_outputs["equipment_utilization_rate"] = metrics.service_equipment_utilization(frequency="project")
         discrete_outputs["equipment_dispatch_summary"] = metrics.dispatch_summary(frequency="project")
-        
-        discrete_outputs["vessel_crew_hours_at_sea"] = metrics.vessel_crew_hours_at_sea(frequency="project", by_equipment=True)
+
+        discrete_outputs["vessel_crew_hours_at_sea"] = metrics.vessel_crew_hours_at_sea(
+            frequency="project", by_equipment=True
+        )
         discrete_outputs["total_tows"] = metrics.number_of_tows(frequency="project")
         outputs["direct_labor"] = metrics.labor_costs(frequency="project", by_type=False)
-        discrete_outputs["materials_by_subassembly"] = metrics.component_costs(frequency="project", by_category=False, by_action=False)
+        discrete_outputs["materials_by_subassembly"] = metrics.component_costs(
+            frequency="project", by_category=False, by_action=False
+        )
         outputs["total_materials"] = discrete_outputs["materials_by_subassembly"].values.sum()
-        
+
         fixed_costs = metrics.project_fixed_costs(frequency="project", resolution="medium")
         outputs["indirect_labor"] = fixed_costs[["labor"]].squeeze()
         outputs["total_fixed_costs"] = fixed_costs.values.sum()
 
         discrete_outputs["process_times"] = metrics.process_times(include_incompletes=False)
         discrete_outputs["request_summary"] = metrics.request_summary()
-        
+
         # NOTE: excluded outputs: NPV, power production
