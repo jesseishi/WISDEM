@@ -947,13 +947,7 @@ class WindPark(om.Group):
                 )
             else:
                 self.add_subsystem("landbosse", LandBOSSE())
-
-        if modeling_options["flags"]["blade"]:
-            self.add_subsystem("financese", PlantFinance(verbosity=modeling_options["General"]["verbosity"]))
-            self.add_subsystem(
-                "outputs_2_screen", Outputs_2_Screen(verbosity=modeling_options["General"]["verbosity"])
-            )
-
+        
         if modeling_options["flags"]["opex"]:
             if model_bos:
                 if is_offshore:
@@ -961,6 +955,12 @@ class WindPark(om.Group):
                     self.add_subsystem("wombat", Wombat(scenario=scenario))
                 else:
                     self.add_subsystem("wombat", Wombat(scenario="land"))
+
+        if modeling_options["flags"]["blade"]:
+            self.add_subsystem("financese", PlantFinance(verbosity=modeling_options["General"]["verbosity"]))
+            self.add_subsystem(
+                "outputs_2_screen", Outputs_2_Screen(verbosity=modeling_options["General"]["verbosity"])
+            )
 
         # BOS inputs
         if model_bos:
