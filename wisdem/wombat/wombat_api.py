@@ -350,6 +350,16 @@ class WombatWisdem(om.ExplicitComponent):
             units="USD",
             desc="Total cost of annualized fixed operational costs.",
         )
+        self.add_discrete_output(
+            "process_times",
+            None,
+            desc="Time (hours) it takes to complete repairs and maintenance, both from request submission to completion, and start to end of repair.",
+        )
+        self.add_discrete_output(
+            "request_summary",
+            None,
+            desc="Number of repair and maintenance requests submitted, canceled, not completed, and completed for each category.",
+        )
 
     def create_layout(self, inputs, outputs, discrete_inputs, discrete_outputs):
         """Creates the WOMBAT layout DataFrame from the ORBIT outputs."""
@@ -669,6 +679,8 @@ class WombatWisdem(om.ExplicitComponent):
         fixed_costs = metrics.project_fixed_costs(frequency="project", resolution="medium")
         outputs["indirect_labor"] = fixed_costs[["labor"]].squeeze()
         outputs["total_fixed_costs"] = fixed_costs.values.sum()
+
+        discrete_outputs["process_times"] = metrics.process_times(include_incompletes=False)
+        discrete_outputs["request_summary"] = metrics.request_summary()
         
-        # NOTE: emissions need assumptions, so it's excluded
-        # TODO: process times, request summary, power production, NPV (requires discount rate and offtake)
+        # NOTE: excluded outputs: NPV, power production
