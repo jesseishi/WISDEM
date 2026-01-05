@@ -2,7 +2,7 @@
 
 import openmdao.api as om
 from wombat import Simulation
-from wombat.core.library import DEFAULT_DATA, load_yaml, read_weather_csv
+from wombat.core.library import DEFAULT_DATA, load_yaml, load_weather
 
 
 class Wombat(om.Group):
@@ -10,7 +10,7 @@ class Wombat(om.Group):
 
     def initialize(self):
         """Initializes the API connections."""
-        self.options.declare("scenario", default="fixed")  # NOTE: config file without the extension
+        self.options.declare("scenario", default="osw-fixed")  # NOTE: config file without the extension
 
     def setup(self):
         """Define all input variables from all models."""
@@ -37,14 +37,14 @@ class WombatWisdem(om.ExplicitComponent):
 
     def initialize(self):
         """Initialize the API."""
-        self.options.declare("scenario", default="fixed")
+        self.options.declare("scenario", default="osw-fixed")
 
     def load_scenario_config(self) -> dict:
         scenario = self.options["scenario"]
-        if scenario == "land":
+        if scenario == "lbw":
             raise NotImplementedError("No default land-based data is available for WOMBAT.")
 
-        if scenario == "fixed":
+        if scenario == "osw-fixed":
             config = load_yaml(DEFAULT_DATA / "project/config", "base_osw_fixed.yaml")
 
             config["vessels"] = {
@@ -60,11 +60,11 @@ class WombatWisdem(om.ExplicitComponent):
                 "base_export": load_yaml(DEFAULT_DATA / "cables", "osw_export.yaml"),
             }
             config["turbines"] = {"base_turbine": load_yaml(DEFAULT_DATA / "turbines", "12MW_osw_fixed.yaml")}
-            config["weather"] = read_weather_csv(DEFAULT_DATA / "weather/era5_40.0N_72.5W_1990_2020.csv")[
+            config["weather"] = load_weather(DEFAULT_DATA / "weather/era5_40.0N_72.5W_1990_2020.pqt")[
                 ["datetime", "windspeed", "waveheight"]
             ]
-            config["end_year"] = 2020
-        elif scenario == "floating":
+            config["end_year"] = 2019
+        elif scenario == "osw-floating":
             config = load_yaml(DEFAULT_DATA / "project/config", "base_osw_floating.yaml")
             config["vessels"] = {
                 "ctv": load_yaml(DEFAULT_DATA / "vessels", "ctv.yaml"),
@@ -80,12 +80,26 @@ class WombatWisdem(om.ExplicitComponent):
             }
             config["turbines"] = {"base_turbine": load_yaml(DEFAULT_DATA / "turbines", "12MW_osw_floating.yaml")}
             config["port"] = load_yaml(DEFAULT_DATA / "project/port", "base_port.yaml")
-            config["weather"] = read_weather_csv(DEFAULT_DATA / "weather/era5_41.0N_125.0W_1989_2019.csv")[
+            config["weather"] = load_weather(DEFAULT_DATA / "weather/era5_41.0N_125.0W_1989_2019.pqt")[
                 ["datetime", "windspeed", "waveheight"]
             ]
             config["end_year"] = 2019
         else:
-            raise NotImplementedError("No land-based default data available for OpEx calculations.")
+            config["vessels"] = {
+                "truck": load_yaml(DEFAULT_DATA / "vessels", "truck.yaml"),
+                "crawler": load_yaml(DEFAULT_DATA / "vessels", "crawler_large.yaml"),
+            }
+            config["fixed_costs"] = load_yaml(DEFAULT_DATA / "project/config", "fixed_costs_lbw.yaml")
+            config["substations"] = {"base_substation": load_yaml(DEFAULT_DATA / "substations", "lbw_substation.yaml")}
+            config["cables"] = {
+                "base_array": load_yaml(DEFAULT_DATA / "cables", "lbw_array.yaml"),
+                "base_export": load_yaml(DEFAULT_DATA / "cables", "lbw_export.yaml"),
+            }
+            config["turbines"] = {"base_turbine": load_yaml(DEFAULT_DATA / "turbines", "3.5MW_lbw_fixed.yaml")}
+            config["weather"] = load_weather(DEFAULT_DATA / "weather/merra2_32.5N_-100.625W_1980_2024.pqt")[
+                ["datetime", "windspeed"]
+            ]
+            config["end_year"] = 2019
 
         config["name"] = "wisdem_wombat"
         config["layout_coords"] = "distance"
@@ -111,12 +125,14 @@ class WombatWisdem(om.ExplicitComponent):
             desc="Distance, in km, that servicing equipment must travel daily to reach the wind farm",
         )
         self.add_discrete_input(
-            "n_ctv", 3, desc="Number of crew transfer vessels that should be made available to the wind farm."
+            "n_ctv",
+            3,
+            desc="Number of crew transfer vessels (offshore) or onsite trucks (land-based) that should be made available to the wind farm.",
         )
         self.add_discrete_input(
             "n_hlv",
             1,
-            desc="Number of heavy lift vessels that should be made available to the wind farm (fixed-bottom simulations only)",
+            desc="Number of heavy lift vessels (fixed-bottom offshore) or crawler cranes (land-based) that should be made available to the wind farm (fixed-bottom simulations only)",
         )
         self.add_discrete_input(
             "n_tugboat",
@@ -696,7 +712,7 @@ class WombatWisdem(om.ExplicitComponent):
 
         config["reduced_speed"] = inputs["reduced_speed"][0]
 
-        if scenario == "floating":
+        if scenario == "osw-floating":
             config["service_equipment"] = [
                 [discrete_inputs["n_ctv"], "ctv"],
                 [1, "dsv"],
@@ -709,7 +725,7 @@ class WombatWisdem(om.ExplicitComponent):
             config["port"]["max_operations"] = discrete_inputs["port_max_operations"]
             config["port"]["n_crews"] = discrete_inputs["n_port_crews"]
             config["port"]["max_operations"] = discrete_inputs["port_max_operations"]
-        elif scenario == "fixed":
+        elif scenario == "osw-fixed":
             config["service_equipment"] = [
                 [discrete_inputs["n_ctv"], "ctv"],
                 [discrete_inputs["n_hlv"], "hlv"],
@@ -717,7 +733,10 @@ class WombatWisdem(om.ExplicitComponent):
                 [1, "cab"],
             ]
         else:
-            raise NotImplementedError("No default land-based OpEx data available for simulation.")
+            config["service_equipment"] = [
+                [discrete_inputs["n_ctv"], "truck"],
+                [discrete_inputs["n_hlv"], "crawler"],
+            ]
 
         config["start_year"] = config["end_year"] - int(inputs["years"][0]) + 1
         config["random_seed"] = discrete_inputs["random_seed"]
@@ -881,7 +900,7 @@ class WombatWisdem(om.ExplicitComponent):
         if (val := inputs["drive_train_replacement_materials"][0]) > -1:
             config["turbines"]["base_turbine"]["drive_train"]["failures"][2]["materials"] = val
 
-        if scenario == "floating":
+        if scenario == "osw-floating":
             if (val := inputs["anchor_minor_repair_scale"][0]) > -1:
                 config["turbines"]["base_turbine"]["anchor"]["failures"][0]["scale"] = val
             if (val := inputs["anchor_minor_repair_time"][0]) > -1:
