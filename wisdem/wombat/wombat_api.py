@@ -98,9 +98,8 @@ class WombatWisdem(om.ExplicitComponent):
             ]
             config["end_year"] = 2019
         else:
-            raise NotImplementedError(
-                f"{scenario=} is not implemented, use one of 'lbw', 'osw-fixed', or 'osw-floating'."
-            )
+            msg = f"{scenario=} is not implemented, use one of 'lbw', 'osw-fixed', or 'osw-floating'."
+            raise NotImplementedError(msg)
 
         config["name"] = "wisdem_wombat"
         config["layout_coords"] = "distance"
