@@ -41,9 +41,6 @@ class WombatWisdem(om.ExplicitComponent):
 
     def load_scenario_config(self) -> dict:
         scenario = self.options["scenario"]
-        if scenario == "lbw":
-            raise NotImplementedError("No default land-based data is available for WOMBAT.")
-
         if scenario == "osw-fixed":
             config = load_yaml(DEFAULT_DATA / "project/config", "base_osw_fixed.yaml")
 
@@ -84,7 +81,7 @@ class WombatWisdem(om.ExplicitComponent):
                 ["datetime", "windspeed", "waveheight"]
             ]
             config["end_year"] = 2019
-        else:
+        elif scenario == "lbw":
             config["vessels"] = {
                 "truck": load_yaml(DEFAULT_DATA / "vessels", "truck.yaml"),
                 "crawler": load_yaml(DEFAULT_DATA / "vessels", "crawler_large.yaml"),
@@ -100,6 +97,10 @@ class WombatWisdem(om.ExplicitComponent):
                 ["datetime", "windspeed"]
             ]
             config["end_year"] = 2019
+        else:
+            raise NotImplementedError(
+                f"{scenario=} is not implemented, use one of 'lbw', 'osw-fixed', or 'osw-floating'."
+            )
 
         config["name"] = "wisdem_wombat"
         config["layout_coords"] = "distance"
