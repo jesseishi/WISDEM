@@ -1069,7 +1069,7 @@ class WindPark(om.Group):
                 self.connect("bos.interconnect_voltage", "landbosse.interconnect_voltage_kV")
 
         # OPEX inputs
-        if modeling_options["flags"]["opex"] and model_bos and is_offshore:
+        if modeling_options["flags"]["opex"] and model_bos:
             self.connect("configuration.lifetime", "wombat.years")
             self.connect("opex.workday_start", "wombat.workday_start")
             self.connect("opex.workday_end", "wombat.workday_end")
@@ -1091,8 +1091,13 @@ class WindPark(om.Group):
             self.connect("opex.random_seed", "wombat.random_seed")
             self.connect("tcc.turbine_cost_kW", "wombat.turbine_capex_kw")
             self.connect("configuration.rated_power", "wombat.turbine_capacity")
-            self.connect("orbit.layout", "wombat.layout")
-            self.connect("orbit.capacity", "wombat.project_capacity")
+
+            if is_offshore:
+                self.connect("orbit.layout", "wombat.layout")
+                self.connect("orbit.capacity", "wombat.project_capacity")
+            else:
+                self.connect("landbosse.layout", "wombat.layout")
+                self.connect("landbosse.capacity", "wombat.project_capacity")
 
         # Inputs to plantfinancese from wt group
         if modeling_options["flags"]["blade"]:

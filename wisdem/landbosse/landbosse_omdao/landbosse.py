@@ -286,6 +286,7 @@ class LandBOSSE_API(om.ExplicitComponent):
         To see how cost totals are calculated see, the compute_total_bos_costs
         method below.
         """
+        self.add_output("capacity", 0.0, units="MW", desc="Total wind farm capacity.")
         self.add_output(
             "bos_capex", 0.0, units="USD", desc="Total BOS CAPEX not including commissioning or decommissioning."
         )
@@ -335,6 +336,7 @@ class LandBOSSE_API(om.ExplicitComponent):
         self.add_discrete_output(
             "erection_components", desc="List of components with their values modified from the defaults.", val=None
         )
+        self.add_discrete_output("layout", desc="Wind farm layout data frame.", val=None)
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
         """
@@ -398,6 +400,8 @@ class LandBOSSE_API(om.ExplicitComponent):
         # Compute the total BOS costs
         self.compute_total_bos_costs(costs_by_module_type_operation, master_output_dict, inputs, outputs)
 
+        discrete_outputs["layout"] = master_output_dict["layout"]
+
     def prepare_master_input_dictionary(self, inputs, discrete_inputs):
         """
         This prepares a master input dictionary by applying all the necessary
@@ -452,7 +456,7 @@ class LandBOSSE_API(om.ExplicitComponent):
 
         # Turbine Capex
         incomplete_input_dict["turbine_capex"] = float(inputs["turbine_capex_kW"][0])
-        
+
         # Needed to avoid distributed wind keys
         incomplete_input_dict["road_distributed_wind"] = False
 
@@ -602,10 +606,11 @@ class LandBOSSE_API(om.ExplicitComponent):
 
         capacity = bos_per_project / bos_per_kw
 
+        outputs["capacity"] = inputs["turbine_rating_MW"][0] * inputs["num_turbines"][0]
         outputs["bos_capex"] = bos_per_project
         outputs["bos_capex_kW"] = bos_per_kw
         outputs["total_capex_kW"] = bos_per_kw + commissioning_kW + decommissioning_kW
-        outputs["total_capex"] = bos_per_project + capacity*(commissioning_kW + decommissioning_kW)
+        outputs["total_capex"] = bos_per_project + capacity * (commissioning_kW + decommissioning_kW)
         outputs["installation_capex"] = installation_per_project
         outputs["installation_capex_kW"] = installation_per_kW
 
