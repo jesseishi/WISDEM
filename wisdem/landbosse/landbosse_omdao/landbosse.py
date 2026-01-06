@@ -398,7 +398,9 @@ class LandBOSSE_API(om.ExplicitComponent):
         self.gather_specific_erection_outputs(master_output_dict, outputs, discrete_outputs)
 
         # Compute the total BOS costs
-        self.compute_total_bos_costs(costs_by_module_type_operation, master_output_dict, inputs, outputs)
+        self.compute_total_bos_costs(
+            costs_by_module_type_operation, master_output_dict, inputs, discrete_inputs, outputs
+        )
 
         discrete_outputs["layout"] = master_output_dict["layout"]
 
@@ -570,7 +572,9 @@ class LandBOSSE_API(om.ExplicitComponent):
         discrete_outputs["erection_crane_choice"] = master_output_dict["crane_choice"]
         discrete_outputs["erection_component_name_topvbase"] = master_output_dict["component_name_topvbase"]
 
-    def compute_total_bos_costs(self, costs_by_module_type_operation, master_output_dict, inputs, outputs):
+    def compute_total_bos_costs(
+        self, costs_by_module_type_operation, master_output_dict, inputs, discrete_inputs, outputs
+    ):
         """
         This computes the total BOS costs from the master output dictionary
         and places them on the necessary outputs.
@@ -606,7 +610,7 @@ class LandBOSSE_API(om.ExplicitComponent):
 
         capacity = bos_per_project / bos_per_kw
 
-        outputs["capacity"] = inputs["turbine_rating_MW"][0] * inputs["num_turbines"][0]
+        outputs["capacity"] = inputs["turbine_rating_MW"][0] * discrete_inputs["num_turbines"]
         outputs["bos_capex"] = bos_per_project
         outputs["bos_capex_kW"] = bos_per_kw
         outputs["total_capex_kW"] = bos_per_kw + commissioning_kW + decommissioning_kW

@@ -1174,16 +1174,16 @@ class ArraySystem(CostModule):
         self.output_dict["collection_cost_csv"] = result
         return result
 
-    def create_layout_for_opex(self):
+    def create_layout_for_opex(self, input_dict, output_dict):
         """Creates a generic grid layout in DataFrame format to be used by WOMBAT for the
         OpEx calculation.
         """
-        num_full_strings = self.output_dict["num_full_strings"]
-        num_partial_strings = self.output_dict["num_partial_strings"]
-        num_turb_full_string = self.output_dict["total_turb_per_string"]
-        num_turb_partial_string = self.output_dict["num_leftover_turb"]
-        turbine_distance_m = self.input_dict["turbine_spacing_rotor_diameters"] * self.input_dict["rotor_diameter_m"]
-        row_distance_m = self.input_dict["row_spacing_rotor_diameters"]
+        num_full_strings = int(output_dict["num_full_strings"])
+        num_partial_strings = int(output_dict["num_partial_strings"])
+        num_turb_full_string = int(output_dict["total_turb_per_string"])
+        num_turb_partial_string = int(output_dict["num_leftover_turb"])
+        turbine_distance_m = input_dict["turbine_spacing_rotor_diameters"] * input_dict["rotor_diameter_m"]
+        row_distance_m = input_dict["row_spacing_rotor_diameters"]
 
         total_strings = num_full_strings + num_partial_strings
         turbines_x = np.full(
@@ -1238,7 +1238,7 @@ class ArraySystem(CostModule):
         layout_df["substation_id"] = "sub1"
         layout_df["id"] = ["sub1"] + [f"t{i}" for i in range(layout_df.shape[0] - 1)]
         layout_df["name"] = ["substation-1"] + [f"turbine-{i}" for i in range(num_turbines)]
-        self.output_dict["layout"] = layout_df
+        return layout_df
 
     def run_module(self):
         """
@@ -1285,7 +1285,7 @@ class ArraySystem(CostModule):
             self.output_dict["collection_cost_module_type_operation"] = self.outputs_for_costs_by_module_type_operation(
                 input_df=self.output_dict["total_collection_cost"], project_id=self.project_name, total_or_turbine=True
             )
-            self.create_layout_for_opex()
+            self.output_dict["layout"] = self.create_layout_for_opex(self.input_dict, self.output_dict)
             return 0, 0  # module ran successfully
         except Exception as error:
             traceback.print_exc()

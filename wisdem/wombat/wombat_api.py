@@ -82,6 +82,7 @@ class WombatWisdem(om.ExplicitComponent):
             ]
             config["end_year"] = 2019
         elif scenario == "lbw":
+            config = load_yaml(DEFAULT_DATA / "project/config", "base_lbw.yaml")
             config["vessels"] = {
                 "truck": load_yaml(DEFAULT_DATA / "vessels", "truck.yaml"),
                 "crawler": load_yaml(DEFAULT_DATA / "vessels", "crawler_large.yaml"),
@@ -92,9 +93,9 @@ class WombatWisdem(om.ExplicitComponent):
                 "base_array": load_yaml(DEFAULT_DATA / "cables", "lbw_array.yaml"),
                 "base_export": load_yaml(DEFAULT_DATA / "cables", "lbw_export.yaml"),
             }
-            config["turbines"] = {"base_turbine": load_yaml(DEFAULT_DATA / "turbines", "3.5MW_lbw_fixed.yaml")}
+            config["turbines"] = {"base_turbine": load_yaml(DEFAULT_DATA / "turbines", "3.5MW_lbw.yaml")}
             config["weather"] = load_weather(DEFAULT_DATA / "weather/merra2_32.5N_-100.625W_1980_2024.pqt")[
-                ["datetime", "windspeed"]
+                ["datetime", "windspeed", "waveheight"]
             ]
             config["end_year"] = 2019
         else:
@@ -817,13 +818,6 @@ class WombatWisdem(om.ExplicitComponent):
         if (val := inputs["hydraulic_pitch_system_replacement_materials"][0]) > -1:
             config["turbines"]["base_turbine"]["hydraulic_pitch_system"]["failures"][2]["materials"] = val
 
-        if (val := inputs["ballast_pump_minor_repair_scale"][0]) > -1:
-            config["turbines"]["base_turbine"]["ballast_pump"]["failures"][0]["scale"] = val
-        if (val := inputs["ballast_pump_minor_repair_time"][0]) > -1:
-            config["turbines"]["base_turbine"]["ballast_pump"]["failures"][0]["time"] = val
-        if (val := inputs["ballast_pump_minor_repair_materials"][0]) > -1:
-            config["turbines"]["base_turbine"]["ballast_pump"]["failures"][0]["materials"] = val
-
         if (val := inputs["yaw_system_minor_repair_scale"][0]) > -1:
             config["turbines"]["base_turbine"]["yaw_system"]["failures"][0]["scale"] = val
         if (val := inputs["yaw_system_minor_repair_time"][0]) > -1:
@@ -919,6 +913,13 @@ class WombatWisdem(om.ExplicitComponent):
                 config["turbines"]["base_turbine"]["anchor"]["failures"][2]["time"] = val
             if (val := inputs["anchor_replacement_materials"][0]) > -1:
                 config["turbines"]["base_turbine"]["anchor"]["failures"][2]["materials"] = val
+
+            if (val := inputs["ballast_pump_minor_repair_scale"][0]) > -1:
+                config["turbines"]["base_turbine"]["ballast_pump"]["failures"][0]["scale"] = val
+            if (val := inputs["ballast_pump_minor_repair_time"][0]) > -1:
+                config["turbines"]["base_turbine"]["ballast_pump"]["failures"][0]["time"] = val
+            if (val := inputs["ballast_pump_minor_repair_materials"][0]) > -1:
+                config["turbines"]["base_turbine"]["ballast_pump"]["failures"][0]["materials"] = val
 
             if (val := inputs["mooring_lines_minor_repair_scale"][0]) > -1:
                 config["turbines"]["base_turbine"]["mooring_lines"]["failures"][0]["scale"] = val
