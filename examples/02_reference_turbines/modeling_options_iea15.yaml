@@ -39,7 +39,7 @@ WISDEM:
         flag: True
         workday_start: 7
         workday_end: 19
-        equipment_dispatch_distance: 50  # TODO: check with orbit
+        equipment_dispatch_distance: 116
         n_ctv: 3
         maintenance_start: None
         non_operational_start: None
@@ -47,19 +47,15 @@ WISDEM:
         reduced_speed_start: None
         reduced_speed_end: None
         reduced_speed: 0
-
-        # TODO: determine how to delineate between fixed vs floating other than different examples
-        # TODO: fixed-bottom only inputs
         n_hlv: 1
-
-        # TODO: floating only inputs
-        n_tugboat: 2
-        port_workday_start: 6
-        port_workday_end: 18
-        n_port_crews: 2
-        max_port_operations: 2
-        repair_port_distance: 116  # TODO: check with orbit
-        random_seed: 42  # TODO: connect this
+        random_seed: 42
+        # TODO: move to floating example?
+        # n_tugboat: 2
+        # port_workday_start: 6
+        # port_workday_end: 18
+        # n_port_crews: 2
+        # max_port_operations: 2
+        # repair_port_distance: 116
     LCOE:
         flag: True
         wake_loss_factor: 0.15

@@ -68,6 +68,20 @@ WISDEM:
         reserve_margin_price: 120.0
         capacity_credit: 0.0
         benchmark_price: 0.071
+    OpEx:
+        flag: True
+        workday_start: 7
+        workday_end: 19
+        equipment_dispatch_distance: 116
+        n_ctv: 3
+        maintenance_start: None
+        non_operational_start: None
+        non_operational_end: None
+        reduced_speed_start: None
+        reduced_speed_end: None
+        reduced_speed: 0
+        n_hlv: 1
+        random_seed: 42
 
 Environment:
     air_density: 1.225
