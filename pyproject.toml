@@ -86,6 +86,7 @@ docs = [
   "sphinx-jsonschema",
   "sphinx-copybutton",
   "numpydoc",
+  "docstring-parser",
 ]
 opt = ["pyoptsparse","nlopt<=2.8"]
 
