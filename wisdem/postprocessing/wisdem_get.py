@@ -124,7 +124,7 @@ def get_blade_shape(prob):
                          prob.get_val('blade.ref_axis','m')[:,0],
                          prob.get_val('blade.ref_axis','m')[:,1],
                          ]
-    blade_shape_col = ['Blade Span','Rotor Coordinate [m]',
+    blade_shape_col = ['Blade Span [r/R]','Rotor Coordinate [m]',
                        'Chord [m]', 'Twist [deg]',
                        'Relative Thickness [%]',
                        'Airfoil LE x-shift from reference axis',
@@ -170,6 +170,34 @@ def get_blade_elasticity(prob):
                        'Section edge inertia [kg/m]',
                        ]
     return pd.DataFrame(data=blade_stiff, columns=blade_stiff_col)
+
+
+def get_blade_layers(prob):
+    layerDF = []
+    l_s = prob.get_val('blade.outer_shape.s')
+    lthick = prob.get_val("blade.structure.layer_thickness", "m")
+    #lorient = prob.get_val("blade.structure.layer_orientation", "deg")
+    lstart = prob.get_val("blade.structure.layer_start_nd")
+    lend = prob.get_val("blade.structure.layer_end_nd")
+    lwidth = prob.get_val("blade.structure.layer_width", "m")
+    layer_code = prob.get_val("blade.structure.build_layer") #1D array of boolean values indicating how to build a layer. 0 - start and end are set constant, 1 - from offset and rotation suction side, 2 - from offset and rotation pressure side, 3 - LE and width, 4 - TE SS width, 5 - TE PS width, 6 - locked to another layer. Negative values place the layer on webs (-1 first web, -2 second web, etc.)."
+    nlay = lthick.shape[0]
+    layer_cols = ['Span','Thickness [m]','Layer Start','Layer End','Layer Width [m]'] #Fiber angle [deg]','
+    for k in range(nlay):
+        ilay = np.c_[l_s, lthick[k,:], lstart[k,:], lend[k,:], lwidth[k,:]] #lorient[k,:], 
+        layerDF.append( (layer_code[k], pd.DataFrame(data=ilay, columns=layer_cols)) )
+
+    webDF = []
+    wstart = prob.get_val('blade.structure.web_start_nd')
+    wend = prob.get_val('blade.structure.web_end_nd')
+    woff = prob.get_val('blade.structure.web_offset')
+    nweb = wstart.shape[0]
+    web_cols = ['Span','Web Start','Web End','Web Offset [m]']
+    for k in range(nweb):
+        iweb = np.c_[l_s, wstart[k,:], wend[k,:], woff[k,:]]
+        webDF.append( pd.DataFrame(data=iweb, columns=web_cols) )
+
+    return layerDF, webDF
 
 
 def get_rotor_performance(prob):

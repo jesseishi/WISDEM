@@ -183,7 +183,7 @@ class WT_RNTA(om.Group):
             if not modeling_options["user_elastic"]["blade"]:
                 self.connect("configuration.n_blades", "rotorse.rs.constr.blade_number")
                 self.connect("drivetrain.uptilt", "rotorse.re.precomp.uptilt")
-                self.connect("blade.outer_shape.section_offset_y", "rotorse.re.section_offset_y")
+                self.connect("blade.pa.section_offset_y_param", "rotorse.re.section_offset_y")
                 self.connect("blade.ps.layer_thickness_param", "rotorse.re.precomp.layer_thickness")
 
                 self.connect("blade.structure.layer_start_nd", "rotorse.re.precomp.layer_start_nd")
@@ -326,7 +326,7 @@ class WT_RNTA(om.Group):
             self.connect(
                 "drivetrain.drivetrain_damping_coefficient_user", "drivese.drivetrain_damping_coefficient_user"
             )
-            self.connect("drivetrain.yaw_mass_user", "drivese.yaw_mass_user")
+            self.connect("drivetrain.yaw_system_mass_user", "drivese.yaw_system_mass_user")
             self.connect("drivetrain.above_yaw_mass_user", "drivese.above_yaw_mass_user")
             self.connect("drivetrain.above_yaw_cm_user", "drivese.above_yaw_cm_user")
             self.connect("drivetrain.above_yaw_I_user", "drivese.above_yaw_I_user")
@@ -368,6 +368,7 @@ class WT_RNTA(om.Group):
             self.connect("drivetrain.mb2Type", "drivese.bear2.bearing_type")
             self.connect("drivetrain.lss_diameter", "drivese.lss_diameter")
             self.connect("drivetrain.lss_wall_thickness", "drivese.lss_wall_thickness")
+            self.connect("drivetrain.lss_mass_user", "drivese.lss_mass_user")
             if modeling_options["WISDEM"]["DriveSE"]["direct"]:
                 self.connect("drivetrain.nose_diameter", "drivese.bear1.D_shaft", src_indices=[0])
                 self.connect("drivetrain.nose_diameter", "drivese.bear2.D_shaft", src_indices=[-1])
@@ -382,6 +383,8 @@ class WT_RNTA(om.Group):
             self.connect("drivetrain.hvac_mass_coeff", "drivese.hvac_mass_coeff")
             self.connect("drivetrain.converter_mass_user", "drivese.converter_mass_user")
             self.connect("drivetrain.transformer_mass_user", "drivese.transformer_mass_user")
+            self.connect("drivetrain.platform_mass_user", "drivese.platform_mass_user")
+            self.connect("drivetrain.cover_mass_user", "drivese.cover_mass_user")
 
             if modeling_options["WISDEM"]["DriveSE"]["direct"]:
                 self.connect("drivetrain.nose_diameter", "drivese.nose_diameter")
@@ -392,6 +395,7 @@ class WT_RNTA(om.Group):
                 self.connect("drivetrain.hss_diameter", "drivese.hss_diameter")
                 self.connect("drivetrain.hss_wall_thickness", "drivese.hss_wall_thickness")
                 self.connect("drivetrain.hss_material", "drivese.hss_material")
+                self.connect("drivetrain.hss_mass_user", "drivese.hss_mass_user")
                 self.connect("drivetrain.planet_numbers", "drivese.planet_numbers")
                 self.connect("drivetrain.gear_configuration", "drivese.gear_configuration")
                 self.connect("drivetrain.gearbox_mass_user", "drivese.gearbox_mass_user")
@@ -965,6 +969,7 @@ class WindPark(om.Group):
                         floating=modeling_options["flags"]["floating"],
                         jacket=modeling_options["flags"]["jacket"],
                         jacket_legs=modeling_options["WISDEM"]["FixedBottomSE"]["n_legs"],
+                        quiet=modeling_options["WISDEM"]["BOS"]["quiet"],
                     ),
                 )
             else:

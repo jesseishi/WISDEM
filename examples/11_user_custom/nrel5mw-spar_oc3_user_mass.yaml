@@ -644,7 +644,7 @@ components:
             mb1_mass_user: 1500.0
             mb2_mass_user: 1350.0
         generator:
-            mass_user: 19500.0
+            mass: 19500.0
             rho_Fe: 7700.0
             rho_Fes: 7850.0
             rho_Copper: 8900.0

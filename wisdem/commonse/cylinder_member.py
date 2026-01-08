@@ -1975,8 +1975,8 @@ class MemberComplex(om.ExplicitComponent):
         rho_ballast = inputs["ballast_density"]
         V_ballast = inputs["ballast_volume"]
         km_ballast = inputs["ballast_unit_cost"]
-        s_ghost1 = float(inputs["s_ghost1"])
-        s_ghost2 = float(inputs["s_ghost2"])
+        s_ghost1 = inputs["s_ghost1"][0]
+        s_ghost2 = inputs["s_ghost2"][0]
         n_ballast = len(V_ballast)
         if n_ballast == 0:
             return
@@ -2448,8 +2448,8 @@ class RectangularMemberHydro(om.ExplicitComponent):
     def compute(self, inputs, outputs):
         # Unpack variables
         s_full = inputs["s_full"]
-        s_ghost1 = float(inputs["s_ghost1"])
-        s_ghost2 = float(inputs["s_ghost2"])
+        s_ghost1 = inputs["s_ghost1"][0]
+        s_ghost2 = inputs["s_ghost2"][0]
         z_full = inputs["z_full"]
         a = inputs["side_length_a_full"]
         b = inputs["side_length_b_full"]

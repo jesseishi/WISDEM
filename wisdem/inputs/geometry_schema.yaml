@@ -129,11 +129,29 @@ properties:
                     bedplate:
                         type: object
                         properties:
-                            mass:
+                            mass_user:
                                 type: number
                                 default: 0.0
                                 units: kg
                                 description: Override regular calculation of bedplate mass with this value
+                                minimum: 0.0
+                    lss:
+                        type: object
+                        properties:
+                            mass_user:
+                                type: number
+                                default: 0.0
+                                units: kg
+                                description: User override of low speed shaft mass.
+                                minimum: 0.0
+                    hss:
+                        type: object
+                        properties:
+                            mass_user:
+                                type: number
+                                default: 0.0
+                                units: kg
+                                description: User override of high speed shaft mass.
                                 minimum: 0.0
                     other_components:
                         type: object
@@ -150,6 +168,30 @@ properties:
                                 default: 0.0
                                 units: kg
                                 description: Override regular regression-based calculation of second main bearing mass with this value
+                                minimum: 0.0
+                            converter_mass_user:
+                                type: number
+                                default: 0.0
+                                units: kg
+                                description: Override regular regression-based calculation of converter mass with this value
+                                minimum: 0.0
+                            transformer_mass_user:
+                                type: number
+                                default: 0.0
+                                units: kg
+                                description: Override regular regression-based calculation of transformer mass with this value
+                                minimum: 0.0
+                            platform_mass_user:
+                                type: number
+                                default: 0.0
+                                units: kg
+                                description: Override regular regression-based calculation of platform mass with this value
+                                minimum: 0.0
+                            cover_mass_user:
+                                type: number
+                                default: 0.0
+                                units: kg
+                                description: Override regular regression-based calculation of cover mass with this value
                                 minimum: 0.0
                     elastic_properties:
                         type: object
@@ -169,37 +211,6 @@ properties:
                     generator:
                         type: object
                         properties:
-                            generator_mass_user:
-                                type: number
-                                default: 0.0
-                                description: Override regular calculation of generator mass (bottom-up or regression-based) with this value
-                                minimum: 0.0
-                            generator_length:
-                                type: number
-                                description: Length of generator along the shaft
-                                unit: meter
-                                minimum: 0.
-                                maximum: 20.
-                                default: 2.0
-                            generator_radius_user:
-                                type: number
-                                description: User input override of generator radius, only used when using simple generator scaling
-                                unit: m
-                                minimum: 0.
-                                maximum: 20.0
-                                default: 0.0
-                            generator_rpm_efficiency_user:
-                                type: object
-                                description: User input override of generator rpm-efficiency values, with rpm as grid input and eff as values input
-                                default: {'grid':[0.0], 'values':[0.0]}
-                                required:
-                                    - grid
-                                    - values
-                                properties:
-                                    grid:
-                                        $ref: "#/definitions/distributed_data/length"
-                                    values:
-                                        $ref: "#/definitions/distributed_data/length"
                             generator_type:
                                 type: string
                                 default: DFIG
@@ -547,6 +558,16 @@ properties:
                                 minimum: 0.0
                                 maximum: 100.0
                                 description: Permanent magnet cost
+            yaw:
+                type: object
+                default: {}
+                properties:
+                    yaw_system_mass_user:
+                        type: number
+                        default: 0.0
+                        units: kg
+                        description: Override regular regression-based calculation of yaw mass with this value
+                        minimum: 0.0
             floating_platform:
                 type: object
                 properties:

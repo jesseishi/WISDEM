@@ -3,13 +3,13 @@ import logging
 
 import numpy as np
 import openmdao.api as om
+from moorpy.helpers import getLineProps
 from scipy.interpolate import PchipInterpolator
 
-from moorpy.helpers import getLineProps
 from wisdem.ccblade.Polar import Polar
 from wisdem.commonse.utilities import arc_length, arc_length_deriv
 from wisdem.rotorse.parametrize_rotor import ComputeReynolds, ParametrizeBladeAero, ParametrizeBladeStruct
-from wisdem.rotorse.geometry_tools.geometry import remap2grid,trailing_edge_smoothing
+from wisdem.rotorse.geometry_tools.geometry import remap2grid, trailing_edge_smoothing
 
 logger = logging.getLogger("wisdem/weis")
 
@@ -59,9 +59,15 @@ class WindTurbineOntologyOpenMDAO(om.Group):
             n_aoa = rotorse_options["n_aoa"]  # Number of angle of attacks
             n_Re = rotorse_options["n_Re"]  # Number of Reynolds, so far hard set at 1
             n_xy = rotorse_options["n_xy"]  # Number of coordinate points to describe the airfoil geometry
-            airfoils.add_output("ac", val=np.zeros(n_af_master), desc="1D array of the aerodynamic centers of each airfoil used along span.")
             airfoils.add_output(
-                "rthick_master", val=np.zeros(n_af_master), desc="1D array of the relative thicknesses of each airfoil used along span."
+                "ac",
+                val=np.zeros(n_af_master),
+                desc="1D array of the aerodynamic centers of each airfoil used along span.",
+            )
+            airfoils.add_output(
+                "rthick_master",
+                val=np.zeros(n_af_master),
+                desc="1D array of the relative thicknesses of each airfoil used along span.",
             )
             airfoils.add_output(
                 "aoa",
@@ -134,7 +140,7 @@ class WindTurbineOntologyOpenMDAO(om.Group):
             units="m",
             desc="Height of the hub center over the ground (land-based) or the mean sea level (offshore) specified by the user.",
         )
-      # Control inputs
+        # Control inputs
         if modeling_options["flags"]["control"]:
             ctrl_ivc = self.add_subsystem("control", om.IndepVarComp())
             ctrl_ivc.add_output(
@@ -150,8 +156,12 @@ class WindTurbineOntologyOpenMDAO(om.Group):
             ctrl_ivc.add_output("max_torque_rate", val=0.0, units="N*m/s", desc="Maximum allowed generator torque rate")
             ctrl_ivc.add_output("rated_TSR", val=0.0, desc="Constant tip speed ratio in region II.")
             ctrl_ivc.add_output("rated_pitch", val=0.0, units="deg", desc="Constant pitch angle in region II.")
-            if 'ROSCO' not in modeling_options: # If using WEIS, ps_percent will be set there
-                ctrl_ivc.add_output("ps_percent", val=1.0, desc="Scalar applied to the max thrust within RotorSE for peak thrust shaving.")
+            if "ROSCO" not in modeling_options:  # If using WEIS, ps_percent will be set there
+                ctrl_ivc.add_output(
+                    "ps_percent",
+                    val=1.0,
+                    desc="Scalar applied to the max thrust within RotorSE for peak thrust shaving.",
+                )
 
         # Blade inputs and connections from airfoils
         if modeling_options["flags"]["blade"]:
@@ -177,39 +187,56 @@ class WindTurbineOntologyOpenMDAO(om.Group):
             self.connect("configuration.n_blades", "blade.high_level_blade_props.n_blades")
 
         # Hub inputs
-        if (modeling_options["flags"]["hub"] or modeling_options["flags"]["blade"] or
-            modeling_options["user_elastic"]["hub"] or modeling_options["user_elastic"]["blade"]):
+        if (
+            modeling_options["flags"]["hub"]
+            or modeling_options["flags"]["blade"]
+            or modeling_options["user_elastic"]["hub"]
+            or modeling_options["user_elastic"]["blade"]
+        ):
             self.add_subsystem("hub", Hub(flags=modeling_options["flags"]))
 
         # Drivetrain inputs
-        if (modeling_options["flags"]["drivetrain"] or modeling_options["flags"]["blade"] or
-            modeling_options["user_elastic"]["drivetrain"] or modeling_options["user_elastic"]["blade"]):
-            self.add_subsystem("drivetrain", Drivetrain(flags=modeling_options["flags"],
-                                                  direct_drive=modeling_options["WISDEM"]["DriveSE"]["direct"]))
+        if (
+            modeling_options["flags"]["drivetrain"]
+            or modeling_options["flags"]["blade"]
+            or modeling_options["user_elastic"]["drivetrain"]
+            or modeling_options["user_elastic"]["blade"]
+        ):
+            self.add_subsystem(
+                "drivetrain",
+                Drivetrain(
+                    flags=modeling_options["flags"], direct_drive=modeling_options["WISDEM"]["DriveSE"]["direct"]
+                ),
+            )
 
         # Generator inputs
         if modeling_options["flags"]["drivetrain"]:
-            self.add_subsystem("generator", Generator(flags=modeling_options["flags"],
-                                                      gentype=modeling_options["WISDEM"]["DriveSE"]["generator"]["type"],
-                                                      n_pc=modeling_options["WISDEM"]["RotorSE"]["n_pc"]))
+            self.add_subsystem(
+                "generator",
+                Generator(
+                    flags=modeling_options["flags"],
+                    gentype=modeling_options["WISDEM"]["DriveSE"]["generator"]["type"],
+                    n_pc=modeling_options["WISDEM"]["RotorSE"]["n_pc"],
+                ),
+            )
 
         if modeling_options["user_elastic"]["hub"] or modeling_options["user_elastic"]["drivetrain"]:
             # User wants to bypass all of DrivetrainSE with elastic summary properties
             drivese_ivc = om.IndepVarComp()
-            drivese_ivc.add_output('hub_system_mass', val=0, units='kg')
-            drivese_ivc.add_output('hub_system_I', val=np.zeros(6), units='kg*m**2')
-            drivese_ivc.add_output('hub_system_cm', val=0.0, units='m')
+            drivese_ivc.add_output("hub_system_mass", val=0, units="kg")
+            drivese_ivc.add_output("hub_system_I", val=np.zeros(6), units="kg*m**2")
+            drivese_ivc.add_output("hub_system_cm", val=0.0, units="m")
             drivese_ivc.add_output("drivetrain_spring_constant", 0.0, units="N*m/rad")
             drivese_ivc.add_output("drivetrain_damping_coefficient", 0.0, units="N*m*s/rad")
             drivese_ivc.add_output("above_yaw_mass", 0.0, units="kg")
             drivese_ivc.add_output("above_yaw_cm", np.zeros(3), units="m")
             drivese_ivc.add_output("above_yaw_I", np.zeros(6), units="kg*m**2")
             drivese_ivc.add_output("above_yaw_I_TT", np.zeros(6), units="kg*m**2")
-            drivese_ivc.add_output('yaw_mass', val=0.0, units='kg')
+            drivese_ivc.add_output("yaw_mass", val=0.0, units="kg")
             drivese_ivc.add_output("rna_mass", 0.0, units="kg")
             drivese_ivc.add_output("rna_cm", np.zeros(3), units="m")
             drivese_ivc.add_output("rna_I_TT", np.zeros(6), units="kg*m**2")
-            drivese_ivc.add_output('generator_rotor_I', val=np.zeros(3), units='kg*m**2')
+            drivese_ivc.add_output("generator_rotor_I", val=np.zeros(3), units="kg*m**2")
             self.add_subsystem("drivese", drivese_ivc)
 
         # Tower inputs
@@ -311,23 +338,86 @@ class WindTurbineOntologyOpenMDAO(om.Group):
         # Operation and maintenance inputs
         if modeling_options["flags"]["opex"]:
             opex_ivc = self.add_subsystem("opex", om.IndepVarComp())
-            opex_ivc.add_discrete_output("workday_start", 7, desc="Hour of the day where any work-related activities begin")
-            opex_ivc.add_discrete_output("workday_end", 19, desc="Hour of the day where any work-related activities end")
-            opex_ivc.add_output("equipment_dispatch_distance", 50, units="km", desc="Distance, in km, that servicing equipment must travel daily to reach the wind farm")
-            opex_ivc.add_discrete_output("n_ctv", 3, desc="Number of crew transfer vessels that should be made available to the wind farm.")
-            opex_ivc.add_discrete_output("n_hlv", 1, desc="Number of heavy lift vessels that should be made available to the wind farm (fixed-bottom simulations only)")
-            opex_ivc.add_discrete_output("n_tugboat", 2, desc="Number of tugboat groups that should be available to the port to tow floating turbines to port and back")
-            opex_ivc.add_discrete_output("port_workday_start", 6, desc="Hour of the day where any work-related activities begin for port-side repairs")
-            opex_ivc.add_discrete_output("port_workday_end", 18, desc="Hour of the day where any work-related activities end for port-side repairs")
-            opex_ivc.add_discrete_output("n_port_crews", 2, desc="Number of port-side crews available to work on simultaneous repairs for any at-port turbine")
-            opex_ivc.add_discrete_output("max_port_operations", 2, desc="Number of turbines that can be at port at once")
-            opex_ivc.add_output("repair_port_distance", 116, units="km", desc="Distance, in km, that tugboats must travel to reach the wind farm for tow-to-port repairs")
-            opex_ivc.add_discrete_output("maintenance_start", None, desc="Date of first maintenance event to determine regular interval timing. Can be set to prior to the starting year to ensure staggered starts.")
-            opex_ivc.add_discrete_output("non_operational_start", None, desc="Starting date, in MM/DD format, for an annual period where the site is inaccessible")
-            opex_ivc.add_discrete_output("non_operational_end", None, desc="Ending date, in MM/DD format, for an annual period where the site is inaccessible")
-            opex_ivc.add_discrete_output("reduced_speed_start", None, desc="Starting date, in MM/DD format, for an annual period where traveling speed is reduced")
-            opex_ivc.add_discrete_output("reduced_speed_end", None, desc="Ending date, in MM/DD format, for an annual period where traveling speed is reduced")
-            opex_ivc.add_output("reduced_speed", 0, units="km/h", desc="Reduced speed applied to servicing equipment in the reduced speed period")
+            opex_ivc.add_discrete_output(
+                "workday_start", 7, desc="Hour of the day where any work-related activities begin"
+            )
+            opex_ivc.add_discrete_output(
+                "workday_end", 19, desc="Hour of the day where any work-related activities end"
+            )
+            opex_ivc.add_output(
+                "equipment_dispatch_distance",
+                50,
+                units="km",
+                desc="Distance, in km, that servicing equipment must travel daily to reach the wind farm",
+            )
+            opex_ivc.add_discrete_output(
+                "n_ctv", 3, desc="Number of crew transfer vessels that should be made available to the wind farm."
+            )
+            opex_ivc.add_discrete_output(
+                "n_hlv",
+                1,
+                desc="Number of heavy lift vessels that should be made available to the wind farm (fixed-bottom simulations only)",
+            )
+            opex_ivc.add_discrete_output(
+                "n_tugboat",
+                2,
+                desc="Number of tugboat groups that should be available to the port to tow floating turbines to port and back",
+            )
+            opex_ivc.add_discrete_output(
+                "port_workday_start",
+                6,
+                desc="Hour of the day where any work-related activities begin for port-side repairs",
+            )
+            opex_ivc.add_discrete_output(
+                "port_workday_end",
+                18,
+                desc="Hour of the day where any work-related activities end for port-side repairs",
+            )
+            opex_ivc.add_discrete_output(
+                "n_port_crews",
+                2,
+                desc="Number of port-side crews available to work on simultaneous repairs for any at-port turbine",
+            )
+            opex_ivc.add_discrete_output(
+                "max_port_operations", 2, desc="Number of turbines that can be at port at once"
+            )
+            opex_ivc.add_output(
+                "repair_port_distance",
+                116,
+                units="km",
+                desc="Distance, in km, that tugboats must travel to reach the wind farm for tow-to-port repairs",
+            )
+            opex_ivc.add_discrete_output(
+                "maintenance_start",
+                None,
+                desc="Date of first maintenance event to determine regular interval timing. Can be set to prior to the starting year to ensure staggered starts.",
+            )
+            opex_ivc.add_discrete_output(
+                "non_operational_start",
+                None,
+                desc="Starting date, in MM/DD format, for an annual period where the site is inaccessible",
+            )
+            opex_ivc.add_discrete_output(
+                "non_operational_end",
+                None,
+                desc="Ending date, in MM/DD format, for an annual period where the site is inaccessible",
+            )
+            opex_ivc.add_discrete_output(
+                "reduced_speed_start",
+                None,
+                desc="Starting date, in MM/DD format, for an annual period where traveling speed is reduced",
+            )
+            opex_ivc.add_discrete_output(
+                "reduced_speed_end",
+                None,
+                desc="Ending date, in MM/DD format, for an annual period where traveling speed is reduced",
+            )
+            opex_ivc.add_output(
+                "reduced_speed",
+                0,
+                units="km/h",
+                desc="Reduced speed applied to servicing equipment in the reduced speed period",
+            )
             opex_ivc.add_discrete_output("random_seed", 42, desc="Random seed for the internal random generator")
 
         # Cost analysis inputs
@@ -350,7 +440,7 @@ class WindTurbineOntologyOpenMDAO(om.Group):
             costs_ivc.add_output("spinner_mass_cost_coeff", units="USD/kg", val=11.1)
             costs_ivc.add_output("lss_mass_cost_coeff", units="USD/kg", val=11.9)
             costs_ivc.add_output("bearing_mass_cost_coeff", units="USD/kg", val=4.5)
-            costs_ivc.add_output("gearbox_torque_cost", units="USD/kN/m", val=50.)
+            costs_ivc.add_output("gearbox_torque_cost", units="USD/kN/m", val=50.0)
             costs_ivc.add_output("hss_mass_cost_coeff", units="USD/kg", val=6.8)
             costs_ivc.add_output("generator_mass_cost_coeff", units="USD/kg", val=12.4)
             costs_ivc.add_output("bedplate_mass_cost_coeff", units="USD/kg", val=2.9)
@@ -432,110 +522,187 @@ class Blade(om.Group):
         if not user_elastic:
             for i in range(rotorse_options["n_layers"]):
                 opt_var.add_output(
-                    "s_opt_layer_%d"%i,
+                    "s_opt_layer_%d" % i,
                     val=np.ones(opt_options["design_variables"]["blade"]["n_opt_struct"][i]),
                 )
                 opt_var.add_output(
-                    "layer_%d_opt"%i,
+                    "layer_%d_opt" % i,
                     units="m",
                     val=np.ones(opt_options["design_variables"]["blade"]["n_opt_struct"][i]),
                 )
         else:
             user_KI = om.IndepVarComp()
             n_span = rotorse_options["n_span"]
-            user_KI.add_output("K11",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K11 element of the stiffness matrix along blade span. K11 corresponds to the shear stiffness along the x axis (in a blade, x points to the trailing edge)",
-                               units="N")
-            user_KI.add_output("K22",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K22 element of the stiffness matrix along blade span. K22 corresponds to the shear stiffness along the y axis (in a blade, y points to the suction side)",
-                               units="N")
-            user_KI.add_output("K33",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K33 element of the stiffness matrix along blade span. K33 corresponds to the axial stiffness along the z axis (in a blade, z runs along the span and points to the tip)",
-                               units="N")
-            user_KI.add_output("K44",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K44 element of the stiffness matrix along blade span. K44 corresponds to the bending stiffness around the x axis (in a blade, x points to the trailing edge and K44 corresponds to the flapwise stiffness)",
-                               units="N*m**2")
-            user_KI.add_output("K55",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K55 element of the stiffness matrix along blade span. K55 corresponds to the bending stiffness around the y axis (in a blade, y points to the suction side and K55 corresponds to the edgewise stiffness)",
-                               units="N*m**2")
-            user_KI.add_output("K66",
-                               val=np.zeros(n_span),
-                               desc="Distribution of K66 element of the stiffness matrix along blade span. K66 corresponds to the torsional stiffness along the z axis (in a blade, z runs along the span and points to the tip)",
-                               units="N*m**2")
-            user_KI.add_output("K12",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K12 element of the stiffness matrix along blade span. K12 is a cross term between shear terms",
-                               units="N")
-            user_KI.add_output("K13",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K13 element of the stiffness matrix along blade span. K13 is a cross term shear - axial",
-                               units="N")
-            user_KI.add_output("K14",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K14 element of the stiffness matrix along blade span. K14 is a cross term shear - bending",
-                               units="N*m**2")
-            user_KI.add_output("K15",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K15 element of the stiffness matrix along blade span. K15 is a cross term shear - bending",
-                               units="N*m**2")
-            user_KI.add_output("K16",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K16 element of the stiffness matrix along blade span. K16 is a cross term shear - torsion",
-                               units="N*m**2")
-            user_KI.add_output("K23",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K23 element of the stiffness matrix along blade span. K23 is a cross term shear - axial",
-                               units="N*m**2")
-            user_KI.add_output("K24",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K24 element of the stiffness matrix along blade span. K24 is a cross term shear - bending",
-                               units="N/m**2")
-            user_KI.add_output("K25",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K25 element of the stiffness matrix along blade span. K25 is a cross term shear - bending",
-                               units="N*m**2")
-            user_KI.add_output("K26",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K26 element of the stiffness matrix along blade span. K26 is a cross term shear - torsion",
-                               units="N*m**2")
-            user_KI.add_output("K34",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K34 element of the stiffness matrix along blade span. K34 is a cross term axial - bending",
-                               units="N*m**2")
-            user_KI.add_output("K35",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K35 element of the stiffness matrix along blade span. K35 is a cross term axial - bending",
-                               units="N*m**2")
-            user_KI.add_output("K36",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K36 element of the stiffness matrix along blade span. K36 is a cross term axial - torsion",
-                               units="N*m**2")
-            user_KI.add_output("K45",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K45 element of the stiffness matrix along blade span. K45 is a cross term flapwise bending - edgewise bending",
-                               units="N*m**2")
-            user_KI.add_output("K46",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K46 element of the stiffness matrix along blade span. K46 is a cross term flapwise bending - torsion",
-                               units="N*m**2")
-            user_KI.add_output("K56",
-                               val=np.zeros(n_span),
-                               desc="Distribution of the K56 element of the stiffness matrix along blade span. K56 is a cross term edgewise bending - torsion",
-                               units="N*m**2")
+            user_KI.add_output(
+                "K11",
+                val=np.zeros(n_span),
+                desc="Distribution of the K11 element of the stiffness matrix along blade span. K11 corresponds to the shear stiffness along the x axis (in a blade, x points to the trailing edge)",
+                units="N",
+            )
+            user_KI.add_output(
+                "K22",
+                val=np.zeros(n_span),
+                desc="Distribution of the K22 element of the stiffness matrix along blade span. K22 corresponds to the shear stiffness along the y axis (in a blade, y points to the suction side)",
+                units="N",
+            )
+            user_KI.add_output(
+                "K33",
+                val=np.zeros(n_span),
+                desc="Distribution of the K33 element of the stiffness matrix along blade span. K33 corresponds to the axial stiffness along the z axis (in a blade, z runs along the span and points to the tip)",
+                units="N",
+            )
+            user_KI.add_output(
+                "K44",
+                val=np.zeros(n_span),
+                desc="Distribution of the K44 element of the stiffness matrix along blade span. K44 corresponds to the bending stiffness around the x axis (in a blade, x points to the trailing edge and K44 corresponds to the flapwise stiffness)",
+                units="N*m**2",
+            )
+            user_KI.add_output(
+                "K55",
+                val=np.zeros(n_span),
+                desc="Distribution of the K55 element of the stiffness matrix along blade span. K55 corresponds to the bending stiffness around the y axis (in a blade, y points to the suction side and K55 corresponds to the edgewise stiffness)",
+                units="N*m**2",
+            )
+            user_KI.add_output(
+                "K66",
+                val=np.zeros(n_span),
+                desc="Distribution of K66 element of the stiffness matrix along blade span. K66 corresponds to the torsional stiffness along the z axis (in a blade, z runs along the span and points to the tip)",
+                units="N*m**2",
+            )
+            user_KI.add_output(
+                "K12",
+                val=np.zeros(n_span),
+                desc="Distribution of the K12 element of the stiffness matrix along blade span. K12 is a cross term between shear terms",
+                units="N",
+            )
+            user_KI.add_output(
+                "K13",
+                val=np.zeros(n_span),
+                desc="Distribution of the K13 element of the stiffness matrix along blade span. K13 is a cross term shear - axial",
+                units="N",
+            )
+            user_KI.add_output(
+                "K14",
+                val=np.zeros(n_span),
+                desc="Distribution of the K14 element of the stiffness matrix along blade span. K14 is a cross term shear - bending",
+                units="N*m**2",
+            )
+            user_KI.add_output(
+                "K15",
+                val=np.zeros(n_span),
+                desc="Distribution of the K15 element of the stiffness matrix along blade span. K15 is a cross term shear - bending",
+                units="N*m**2",
+            )
+            user_KI.add_output(
+                "K16",
+                val=np.zeros(n_span),
+                desc="Distribution of the K16 element of the stiffness matrix along blade span. K16 is a cross term shear - torsion",
+                units="N*m**2",
+            )
+            user_KI.add_output(
+                "K23",
+                val=np.zeros(n_span),
+                desc="Distribution of the K23 element of the stiffness matrix along blade span. K23 is a cross term shear - axial",
+                units="N*m**2",
+            )
+            user_KI.add_output(
+                "K24",
+                val=np.zeros(n_span),
+                desc="Distribution of the K24 element of the stiffness matrix along blade span. K24 is a cross term shear - bending",
+                units="N/m**2",
+            )
+            user_KI.add_output(
+                "K25",
+                val=np.zeros(n_span),
+                desc="Distribution of the K25 element of the stiffness matrix along blade span. K25 is a cross term shear - bending",
+                units="N*m**2",
+            )
+            user_KI.add_output(
+                "K26",
+                val=np.zeros(n_span),
+                desc="Distribution of the K26 element of the stiffness matrix along blade span. K26 is a cross term shear - torsion",
+                units="N*m**2",
+            )
+            user_KI.add_output(
+                "K34",
+                val=np.zeros(n_span),
+                desc="Distribution of the K34 element of the stiffness matrix along blade span. K34 is a cross term axial - bending",
+                units="N*m**2",
+            )
+            user_KI.add_output(
+                "K35",
+                val=np.zeros(n_span),
+                desc="Distribution of the K35 element of the stiffness matrix along blade span. K35 is a cross term axial - bending",
+                units="N*m**2",
+            )
+            user_KI.add_output(
+                "K36",
+                val=np.zeros(n_span),
+                desc="Distribution of the K36 element of the stiffness matrix along blade span. K36 is a cross term axial - torsion",
+                units="N*m**2",
+            )
+            user_KI.add_output(
+                "K45",
+                val=np.zeros(n_span),
+                desc="Distribution of the K45 element of the stiffness matrix along blade span. K45 is a cross term flapwise bending - edgewise bending",
+                units="N*m**2",
+            )
+            user_KI.add_output(
+                "K46",
+                val=np.zeros(n_span),
+                desc="Distribution of the K46 element of the stiffness matrix along blade span. K46 is a cross term flapwise bending - torsion",
+                units="N*m**2",
+            )
+            user_KI.add_output(
+                "K56",
+                val=np.zeros(n_span),
+                desc="Distribution of the K56 element of the stiffness matrix along blade span. K56 is a cross term edgewise bending - torsion",
+                units="N*m**2",
+            )
 
             # mass matrix inputs
-            user_KI.add_output("mass", val=np.zeros(n_span),  desc="Mass per unit length along the beam, expressed in kilogram per meter", units="kg/m")
-            user_KI.add_output("cm_x", val=np.zeros(n_span),  desc="Distance between the reference axis and the center of mass along the x axis", units="m")
-            user_KI.add_output("cm_y", val=np.zeros(n_span),  desc="Distance between the reference axis and the center of mass along the y axis", units="m")
-            user_KI.add_output("i_edge", val=np.zeros(n_span),  desc="Edgewise mass moment of inertia per unit span (around y axis)", units="kg*m**2")
-            user_KI.add_output("i_flap", val=np.zeros(n_span),  desc="Flapwise mass moment of inertia per unit span (around x axis)", units="kg*m**2")
-            user_KI.add_output("i_plr", val=np.zeros(n_span),  desc="Polar moment of inertia per unit span (around z axis). Please note that for beam-like structures iplr must be equal to iedge plus iflap.", units="kg*m**2")
-            user_KI.add_output("i_cp", val=np.zeros(n_span),  desc="Sectional cross-product of inertia per unit span (cross term x y)", units="kg*m**2")
+            user_KI.add_output(
+                "mass",
+                val=np.zeros(n_span),
+                desc="Mass per unit length along the beam, expressed in kilogram per meter",
+                units="kg/m",
+            )
+            user_KI.add_output(
+                "cm_x",
+                val=np.zeros(n_span),
+                desc="Distance between the reference axis and the center of mass along the x axis",
+                units="m",
+            )
+            user_KI.add_output(
+                "cm_y",
+                val=np.zeros(n_span),
+                desc="Distance between the reference axis and the center of mass along the y axis",
+                units="m",
+            )
+            user_KI.add_output(
+                "i_edge",
+                val=np.zeros(n_span),
+                desc="Edgewise mass moment of inertia per unit span (around y axis)",
+                units="kg*m**2",
+            )
+            user_KI.add_output(
+                "i_flap",
+                val=np.zeros(n_span),
+                desc="Flapwise mass moment of inertia per unit span (around x axis)",
+                units="kg*m**2",
+            )
+            user_KI.add_output(
+                "i_plr",
+                val=np.zeros(n_span),
+                desc="Polar moment of inertia per unit span (around z axis). Please note that for beam-like structures iplr must be equal to iedge plus iflap.",
+                units="kg*m**2",
+            )
+            user_KI.add_output(
+                "i_cp",
+                val=np.zeros(n_span),
+                desc="Sectional cross-product of inertia per unit span (cross term x y)",
+                units="kg*m**2",
+            )
 
             self.add_subsystem("user_KI", user_KI)
 
@@ -561,6 +728,8 @@ class Blade(om.Group):
         self.connect("opt_var.twist_opt", "pa.twist_opt")
         self.connect("opt_var.chord_opt", "pa.chord_opt")
         self.connect("outer_shape.s", "pa.s")
+        self.connect("outer_shape.chord", "pa.chord_original")
+        self.connect("outer_shape.section_offset_y", "pa.section_offset_y")
 
         # Interpolate airfoil profiles and coordinates
         self.add_subsystem(
@@ -572,7 +741,9 @@ class Blade(om.Group):
         self.connect("outer_shape.s", "interp_airfoils.s")
         self.connect("outer_shape.rthick_yaml", "interp_airfoils.rthick_yaml")
         self.connect("pa.chord_param", ["interp_airfoils.chord", "compute_coord_xy_dim.chord"])
-        self.connect("outer_shape.section_offset_y", ["interp_airfoils.section_offset_y", "compute_coord_xy_dim.section_offset_y"])
+        self.connect(
+            "pa.section_offset_y_param", ["interp_airfoils.section_offset_y", "compute_coord_xy_dim.section_offset_y"]
+        )
         self.connect("opt_var.af_position", "interp_airfoils.af_position")
 
         self.add_subsystem("high_level_blade_props", ComputeHighLevelBladeProperties(rotorse_options=rotorse_options))
@@ -616,8 +787,8 @@ class Blade(om.Group):
 
             # Connections to blade struct parametrization
             for i in range(rotorse_options["n_layers"]):
-                self.connect("opt_var.layer_%d_opt"%i, "ps.layer_%d_opt"%i)
-                self.connect("opt_var.s_opt_layer_%d"%i, "ps.s_opt_layer_%d"%i)
+                self.connect("opt_var.layer_%d_opt" % i, "ps.layer_%d_opt" % i)
+                self.connect("opt_var.s_opt_layer_%d" % i, "ps.s_opt_layer_%d" % i)
 
             self.connect("outer_shape.s", "ps.s")
             self.connect("compute_coord_xy_dim.coord_xy_dim", "structure.coord_xy_dim")
@@ -683,7 +854,9 @@ class Blade_Outer_Shape(om.Group):
             desc="1D array of the airfoil position relative to the reference axis, specifying the chordline normal distance in meters from the reference axis. 0 means that the reference axis lies on the airfoil chordline, a positive offset means that the chordline is shifted in the direction of the suction side relative to the reference axis, and a negative offset that the section is shifted in the direction of the pressure side of the airfoil.",
         )
         ivc.add_output(
-            "rthick_yaml", val=np.zeros(n_span), desc="1D array of the relative thickness values defined along blade span."
+            "rthick_yaml",
+            val=np.zeros(n_span),
+            desc="1D array of the relative thickness values defined along blade span.",
         )
 
 
@@ -723,7 +896,9 @@ class Blade_Interp_Airfoils(om.ExplicitComponent):
 
         # Airfoil properties
         self.add_input("ac", val=np.zeros(n_af_master), desc="1D array of the aerodynamic centers of each airfoil.")
-        self.add_input("rthick_master", val=np.zeros(n_af_master), desc="1D array of the relative thicknesses of each airfoil.")
+        self.add_input(
+            "rthick_master", val=np.zeros(n_af_master), desc="1D array of the relative thicknesses of each airfoil."
+        )
         self.add_input(
             "aoa",
             val=np.zeros(n_aoa),
@@ -795,7 +970,7 @@ class Blade_Interp_Airfoils(om.ExplicitComponent):
         # Pchip does have an associated derivative method built-in:
         # https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.PchipInterpolator.derivative.html#scipy.interpolate.PchipInterpolator.derivative
         spline = PchipInterpolator
-        if max(inputs["rthick_yaml"]) < 1.e-6:
+        if max(inputs["rthick_yaml"]) < 1.0e-6:
             rthick_spline = spline(inputs["af_position"], inputs["rthick_master"])
             outputs["rthick_interp"] = rthick_spline(inputs["s"])
         else:
@@ -806,7 +981,7 @@ class Blade_Interp_Airfoils(om.ExplicitComponent):
 
         # Spanwise interpolation of the profile coordinates with a pchip
         # Is this unique an issue? Does it assume no two airfoils have the same relative thickness?
-        rthick_unique, indices = np.unique(inputs["rthick_master"] , return_index=True)
+        rthick_unique, indices = np.unique(inputs["rthick_master"], return_index=True)
         profile_spline = spline(rthick_unique, inputs["coord_xy"][indices, :, :])
         coord_xy_interp = np.flip(profile_spline(np.flip(outputs["rthick_interp"])), axis=0)
 
@@ -820,7 +995,6 @@ class Blade_Interp_Airfoils(om.ExplicitComponent):
             # If the rel thickness is smaller than 0.4 apply a trailing ege smoothing step
             if outputs["rthick_interp"][i] < 0.4:
                 coord_xy_interp[i, :, :] = trailing_edge_smoothing(coord_xy_interp[i, :, :])
-
 
         # Spanwise interpolation of the airfoil polars with a pchip
         cl_spline = spline(rthick_unique, inputs["cl"][indices, :, :])
@@ -902,20 +1076,24 @@ class Compute_Coord_XY_Dim(om.ExplicitComponent):
         coord_xy_twist = copy.copy(coord_xy_interp)
         x = coord_xy_dim[:, :, 0]
         y = coord_xy_dim[:, :, 1]
-        coord_xy_twist[:, :, 0] = x * np.cos(np.deg2rad(twist[:,np.newaxis])) - y * np.sin(np.deg2rad(twist[:,np.newaxis]))
-        coord_xy_twist[:, :, 1] = y * np.cos(np.deg2rad(twist[:,np.newaxis])) + x * np.sin(np.deg2rad(twist[:,np.newaxis]))
+        coord_xy_twist[:, :, 0] = x * np.cos(np.deg2rad(twist[:, np.newaxis])) - y * np.sin(
+            np.deg2rad(twist[:, np.newaxis])
+        )
+        coord_xy_twist[:, :, 1] = y * np.cos(np.deg2rad(twist[:, np.newaxis])) + x * np.sin(
+            np.deg2rad(twist[:, np.newaxis])
+        )
         outputs["coord_xy_dim_twisted"] = coord_xy_twist
 
         # Integrate along span for surface area
-        wetted_chord = coord_xy_dim[:,:,1].max(axis=1) - coord_xy_dim[:,:,1].min(axis=1)
-        projected_chord = coord_xy_twist[:,:,1].max(axis=1) - coord_xy_twist[:,:,1].min(axis=1)
+        wetted_chord = coord_xy_dim[:, :, 1].max(axis=1) - coord_xy_dim[:, :, 1].min(axis=1)
+        projected_chord = coord_xy_twist[:, :, 1].max(axis=1) - coord_xy_twist[:, :, 1].min(axis=1)
         try:
             # Numpy v1/2 clash
-            outputs["wetted_area"] = np.trapezoid(wetted_chord, inputs["ref_axis"][:,2])
-            outputs["projected_area"] = np.trapezoid(projected_chord, inputs["ref_axis"][:,2])
+            outputs["wetted_area"] = np.trapezoid(wetted_chord, inputs["ref_axis"][:, 2])
+            outputs["projected_area"] = np.trapezoid(projected_chord, inputs["ref_axis"][:, 2])
         except AttributeError:
-            outputs["wetted_area"] = np.trapz(wetted_chord, inputs["ref_axis"][:,2])
-            outputs["projected_area"] = np.trapz(projected_chord, inputs["ref_axis"][:,2])
+            outputs["wetted_area"] = np.trapz(wetted_chord, inputs["ref_axis"][:, 2])
+            outputs["projected_area"] = np.trapz(projected_chord, inputs["ref_axis"][:, 2])
 
 
 class Blade_Lofted_Shape(om.ExplicitComponent):
@@ -957,7 +1135,7 @@ class Blade_Lofted_Shape(om.ExplicitComponent):
                 ) + np.hstack([0, inputs["ref_axis"][i, :]])
                 k = k + 1
 
-        # Debug output
+            # Debug output
             np.savetxt(
                 "3d_xyz_blade_lofted.dat",
                 outputs["3D_shape"],
@@ -986,7 +1164,7 @@ class Blade_Structure(om.Group):
         ivc.add_output(
             "web_offset",
             val=np.zeros((n_webs, n_span)),
-            units = "m",
+            units="m",
             desc="2D array of the dimensional offset of a web with respect to the reference axis. The first dimension represents each web, the second dimension represents each entry along blade span.",
         )
         ivc.add_discrete_output(
@@ -997,7 +1175,7 @@ class Blade_Structure(om.Group):
         ivc.add_output(
             "web_rotation",
             val=np.zeros(n_webs),
-            units = "deg",
+            units="deg",
             desc="1D array of the dimensional rotation of a web with respect to the reference axis. The dimension represents each web.",
         )
         ivc.add_output(
@@ -1034,19 +1212,19 @@ class Blade_Structure(om.Group):
         ivc.add_output(
             "layer_width",
             val=np.zeros((n_layers, n_span)),
-            units ="m",
+            units="m",
             desc="2D array of the width of the layers. The first dimension represents each layer, the second dimension represents span.",
         )
         ivc.add_output(
             "layer_offset",
             val=np.zeros((n_layers, n_span)),
-            units = "m",
+            units="m",
             desc="2D array of the dimensional offset of a layer with respect to the reference axis. The first dimension represents each layer, the second dimension represents each entry along blade span.",
         )
         ivc.add_output(
             "layer_rotation",
             val=np.zeros(n_layers),
-            units = "deg",
+            units="deg",
             desc="1D array of the dimensional rotation of a layer with respect to the reference axis. The dimension represents each layer.",
         )
         ivc.add_output(
@@ -1083,7 +1261,6 @@ class Compute_Blade_Structure(om.ExplicitComponent):
         self.n_layers = n_layers = rotorse_options["n_layers"]
         self.n_xy = n_xy = rotorse_options["n_xy"]  # Number of coordinate points to describe the airfoil geometry
 
-
         self.add_input(
             "web_start_nd_yaml",
             val=np.zeros((n_webs, n_span)),
@@ -1097,13 +1274,13 @@ class Compute_Blade_Structure(om.ExplicitComponent):
         self.add_input(
             "web_offset",
             val=np.zeros((n_webs, n_span)),
-            units = "m",
+            units="m",
             desc="2D array of the dimensional offset of a web with respect to the reference axis. The first dimension represents each web, the second dimension represents each entry along blade span.",
         )
         self.add_input(
             "web_rotation",
             val=np.zeros(n_webs),
-            units = "deg",
+            units="deg",
             desc="1D array of the dimensional rotation of a web with respect to the reference axis. The dimension represents each web.",
         )
         self.add_discrete_input(
@@ -1124,13 +1301,13 @@ class Compute_Blade_Structure(om.ExplicitComponent):
         self.add_input(
             "layer_width",
             val=np.zeros((n_layers, n_span)),
-            units ="m",
+            units="m",
             desc="2D array of the width of the layers. The first dimension represents each layer, the second dimension represents span.",
         )
         self.add_input(
             "layer_offset",
             val=np.zeros((n_layers, n_span)),
-            units = "m",
+            units="m",
             desc="2D array of the dimensional offset of a layer with respect to the reference axis. The first dimension represents each layer, the second dimension represents each entry along blade span.",
         )
         self.add_discrete_input(
@@ -1145,7 +1322,7 @@ class Compute_Blade_Structure(om.ExplicitComponent):
         self.add_input(
             "layer_rotation",
             val=np.zeros(n_layers),
-            units = "deg",
+            units="deg",
             desc="1D array of the dimensional rotation of a layer with respect to the reference axis. The dimension represents each layer.",
         )
         self.add_input(
@@ -1196,11 +1373,11 @@ class Compute_Blade_Structure(om.ExplicitComponent):
                 rotation_matrix = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
                 xy_coord_rotated = xy_coord_i @ rotation_matrix.T
                 web_offset = inputs["web_offset"][j, i]
-                idx_web_ss = np.argmin(abs(xy_coord_rotated[:idx_le,0] - web_offset))
-                idx_web_ps = np.argmin(abs(xy_coord_rotated[idx_le:,0] - web_offset)) + idx_le
+                idx_web_ss = np.argmin(abs(xy_coord_rotated[:idx_le, 0] - web_offset))
+                idx_web_ps = np.argmin(abs(xy_coord_rotated[idx_le:, 0] - web_offset)) + idx_le
                 xy_arc_i = arc_length(xy_coord_i)
-                web_start_nd[j, i] = xy_arc_i[idx_web_ss] /  xy_arc_i[-1]
-                web_end_nd[j, i] = xy_arc_i[idx_web_ps] /  xy_arc_i[-1]
+                web_start_nd[j, i] = xy_arc_i[idx_web_ss] / xy_arc_i[-1]
+                web_end_nd[j, i] = xy_arc_i[idx_web_ps] / xy_arc_i[-1]
 
         if np.any(web_start_nd < 0):
             logger.debug("Web start points must be larger than 0. Setting the value to 0.")
@@ -1218,7 +1395,6 @@ class Compute_Blade_Structure(om.ExplicitComponent):
         outputs["web_start_nd"] = web_start_nd
         outputs["web_end_nd"] = web_end_nd
 
-
         # Compute the start and end points of the layers
         for j in range(self.n_layers):
             if discrete_inputs["build_layer"][j] == 0:
@@ -1234,10 +1410,10 @@ class Compute_Blade_Structure(om.ExplicitComponent):
                     rotation_matrix = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
                     xy_coord_rotated = xy_coord_i @ rotation_matrix.T
                     layer_offset = inputs["layer_offset"][j, i]
-                    if discrete_inputs["build_layer"][j] == 1: # suction side
-                        idx_layer = np.argmin(abs(xy_coord_rotated[:idx_le,0] - layer_offset))
-                    else: # pressure side
-                        idx_layer = np.argmin(abs(xy_coord_rotated[idx_le:,0] - layer_offset)) + idx_le
+                    if discrete_inputs["build_layer"][j] == 1:  # suction side
+                        idx_layer = np.argmin(abs(xy_coord_rotated[:idx_le, 0] - layer_offset))
+                    else:  # pressure side
+                        idx_layer = np.argmin(abs(xy_coord_rotated[idx_le:, 0] - layer_offset)) + idx_le
                     xy_arc_i = arc_length(xy_coord_i)
                     arc_L_i = xy_arc_i[-1]
                     width_i = inputs["layer_width"][j, i]
@@ -1264,7 +1440,7 @@ class Compute_Blade_Structure(om.ExplicitComponent):
                     arc_L_i = xy_arc_i[-1]
                     width_i = inputs["layer_width"][j, i]
 
-                    layer_start_nd[j, i] = 0.
+                    layer_start_nd[j, i] = 0.0
                     layer_end_nd[j, i] = width_i / arc_L_i
 
             elif discrete_inputs["build_layer"][j] == 5:
@@ -1274,8 +1450,8 @@ class Compute_Blade_Structure(om.ExplicitComponent):
                     arc_L_i = xy_arc_i[-1]
                     width_i = inputs["layer_width"][j, i]
 
-                    layer_start_nd[j, i] = 1. - width_i / arc_L_i
-                    layer_end_nd[j, i] = 1.
+                    layer_start_nd[j, i] = 1.0 - width_i / arc_L_i
+                    layer_end_nd[j, i] = 1.0
 
             elif discrete_inputs["build_layer"][j] == 6:
                 # start a layer from the end of another layer, and end where the other starts
@@ -1307,13 +1483,22 @@ class Hub(om.Group):
     def setup(self):
         ivc = self.add_subsystem("hub_indep_vars", om.IndepVarComp(), promotes=["*"])
 
-        ivc.add_output("cone", val=0.0, units="deg", desc="Cone angle of the rotor. It defines the angle between the rotor plane and the blade pitch axis. A standard machine has positive values.")
+        ivc.add_output(
+            "cone",
+            val=0.0,
+            units="deg",
+            desc="Cone angle of the rotor. It defines the angle between the rotor plane and the blade pitch axis. A standard machine has positive values.",
+        )
         # ivc.add_output('drag_coeff',   val=0.0,                desc='Drag coefficient to estimate the aerodynamic forces generated by the hub.') # GB: this doesn't connect to anything
         ivc.add_output("diameter", val=0.0, units="m")
 
-        exec_comp = om.ExecComp("radius = 0.5 * diameter", units="m", radius={
-            "desc": "Radius of the hub. It defines the distance of the blade root from the rotor center along the coned line."
-        })
+        exec_comp = om.ExecComp(
+            "radius = 0.5 * diameter",
+            units="m",
+            radius={
+                "desc": "Radius of the hub. It defines the distance of the blade root from the rotor center along the coned line."
+            },
+        )
         self.add_subsystem("compute_radius", exec_comp, promotes=["*"])
 
         if self.options["flags"]["hub"]:
@@ -1332,9 +1517,9 @@ class Hub(om.Group):
             ivc.add_output("hub_shell_mass_user", val=0.0, units="kg")
             ivc.add_output("spinner_mass_user", val=0.0, units="kg")
             ivc.add_output("pitch_system_mass_user", val=0.0, units="kg")
-            ivc.add_output('hub_system_mass_user', val=0, units='kg')
-            ivc.add_output('hub_system_I_user', val=np.zeros(6), units='kg*m**2')
-            ivc.add_output('hub_system_cm_user', val=0.0, units='m')
+            ivc.add_output("hub_system_mass_user", val=0, units="kg")
+            ivc.add_output("hub_system_I_user", val=np.zeros(6), units="kg*m**2")
+            ivc.add_output("hub_system_cm_user", val=0.0, units="m")
 
 
 class Drivetrain(om.Group):
@@ -1347,58 +1532,154 @@ class Drivetrain(om.Group):
         ivc = self.add_subsystem("nac_indep_vars", om.IndepVarComp(), promotes=["*"])
 
         # Common direct and geared
-        ivc.add_output("uptilt", val=0.0, units="deg", desc="Shaft uptilt angle. A standard machine has positive values.")
-        ivc.add_output("distance_tt_hub", val=0.0, units="m", desc="Vertical distance from tower top plane to hub flange")
+        ivc.add_output(
+            "uptilt", val=0.0, units="deg", desc="Shaft uptilt angle. A standard machine has positive values."
+        )
+        ivc.add_output(
+            "distance_tt_hub", val=0.0, units="m", desc="Vertical distance from tower top plane to hub flange"
+        )
         ivc.add_output("overhang", val=0.0, units="m", desc="Horizontal distance from tower top edge to hub flange")
         ivc.add_output("gearbox_efficiency", val=1.0, desc="Efficiency of the gearbox. Set to 1.0 for direct-drive")
         ivc.add_output("gearbox_mass_user", val=0.0, units="kg", desc="User override of gearbox mass.")
-        ivc.add_output("gearbox_radius_user", val=0.0, units="m", desc="User override of gearbox radius (only used if gearbox_mass_user is > 0).")
-        ivc.add_output("gearbox_length_user", val=0.0, units="m", desc="User override of gearbox length (only used if gearbox_mass_user is > 0).")
+        ivc.add_output(
+            "gearbox_radius_user",
+            val=0.0,
+            units="m",
+            desc="User override of gearbox radius (only used if gearbox_mass_user is > 0).",
+        )
+        ivc.add_output(
+            "gearbox_length_user",
+            val=0.0,
+            units="m",
+            desc="User override of gearbox length (only used if gearbox_mass_user is > 0).",
+        )
         ivc.add_output("gear_ratio", val=1.0, desc="Total gear ratio of drivetrain (use 1.0 for direct)")
 
         if self.options["flags"]["drivetrain"]:
-            ivc.add_output("distance_hub_mb", val=0.0, units="m", desc="Distance from hub flange to first main bearing along shaft")
-            ivc.add_output("distance_mb_mb", val=0.0, units="m", desc="Distance from first to second main bearing along shaft")
+            ivc.add_output(
+                "distance_hub_mb", val=0.0, units="m", desc="Distance from hub flange to first main bearing along shaft"
+            )
+            ivc.add_output(
+                "distance_mb_mb", val=0.0, units="m", desc="Distance from first to second main bearing along shaft"
+            )
             ivc.add_output("lss_diameter", val=np.zeros(2), units="m", desc="Diameter of low speed shaft")
             ivc.add_output("lss_wall_thickness", val=np.zeros(2), units="m", desc="Thickness of low speed shaft")
+            ivc.add_output("lss_mass_user", val=0.0, units="kg", desc="User override of low speed shaft mass.")
             ivc.add_output("damping_ratio", val=0.0, desc="Damping ratio for the drivetrain system")
-            ivc.add_output("brake_mass_user", val=0.0, units="kg", desc="Override regular regression-based calculation of brake mass with this value")
-            ivc.add_output("hvac_mass_coeff", val=0.025, units="kg/kW/m", desc="Regression-based scaling coefficient on machine rating to get HVAC system mass")
-            ivc.add_output("converter_mass_user", val=0.0, units="kg", desc="Override regular regression-based calculation of converter mass with this value")
-            ivc.add_output("transformer_mass_user", val=0.0, units="kg", desc="Override regular regression-based calculation of transformer mass with this value")
-            ivc.add_output("mb1_mass_user", val=0.0, units="kg", desc="Override regular regression-based calculation of first main bearing mass with this value")
-            ivc.add_output("mb2_mass_user", val=0.0, units="kg", desc="Override regular regression-based calculation of second main bearing mass with this value")
-            ivc.add_discrete_output( "mb1Type", val="CARB", desc="Type of main bearing: CARB / CRB / SRB / TRB")
-            ivc.add_discrete_output( "mb2Type", val="SRB", desc="Type of main bearing: CARB / CRB / SRB / TRB")
-            ivc.add_discrete_output( "uptower", val=True, desc="If power electronics are located uptower (True) or at tower base (False)")
-            ivc.add_discrete_output( "lss_material", val="steel", desc="Material name identifier for the low speed shaft")
-            ivc.add_discrete_output( "hss_material", val="steel", desc="Material name identifier for the high speed shaft")
-            ivc.add_discrete_output( "bedplate_material", val="steel", desc="Material name identifier for the bedplate")
-            ivc.add_output("bedplate_mass_user", val=0.0, units="kg", desc="Override bottom-up calculation of bedplate mass with this value")
+            ivc.add_output(
+                "brake_mass_user",
+                val=0.0,
+                units="kg",
+                desc="Override regular regression-based calculation of brake mass with this value",
+            )
+            ivc.add_output(
+                "hvac_mass_coeff",
+                val=0.025,
+                units="kg/kW/m",
+                desc="Regression-based scaling coefficient on machine rating to get HVAC system mass",
+            )
+            ivc.add_output(
+                "converter_mass_user",
+                val=0.0,
+                units="kg",
+                desc="Override regular regression-based calculation of converter mass with this value",
+            )
+            ivc.add_output(
+                "transformer_mass_user",
+                val=0.0,
+                units="kg",
+                desc="Override regular regression-based calculation of transformer mass with this value",
+            )
+            ivc.add_output(
+                "platform_mass_user",
+                val=0.0,
+                units="kg",
+                desc="Override regular regression-based calculation of platform mass with this value",
+            )
+            ivc.add_output(
+                "cover_mass_user",
+                val=0.0,
+                units="kg",
+                desc="Override regular regression-based calculation of cover mass with this value",
+            )
+            ivc.add_output(
+                "mb1_mass_user",
+                val=0.0,
+                units="kg",
+                desc="Override regular regression-based calculation of first main bearing mass with this value",
+            )
+            ivc.add_output(
+                "mb2_mass_user",
+                val=0.0,
+                units="kg",
+                desc="Override regular regression-based calculation of second main bearing mass with this value",
+            )
+            ivc.add_discrete_output("mb1Type", val="CARB", desc="Type of main bearing: CARB / CRB / SRB / TRB")
+            ivc.add_discrete_output("mb2Type", val="SRB", desc="Type of main bearing: CARB / CRB / SRB / TRB")
+            ivc.add_discrete_output(
+                "uptower", val=True, desc="If power electronics are located uptower (True) or at tower base (False)"
+            )
+            ivc.add_discrete_output(
+                "lss_material", val="steel", desc="Material name identifier for the low speed shaft"
+            )
+            ivc.add_discrete_output(
+                "hss_material", val="steel", desc="Material name identifier for the high speed shaft"
+            )
+            ivc.add_discrete_output("bedplate_material", val="steel", desc="Material name identifier for the bedplate")
+            ivc.add_output(
+                "bedplate_mass_user",
+                val=0.0,
+                units="kg",
+                desc="Override bottom-up calculation of bedplate mass with this value",
+            )
 
             if self.options["direct_drive"]:
                 # Direct only
-                ivc.add_output("nose_diameter", val=np.zeros(2), units="m", desc="Diameter of nose (also called turret or spindle)", )
-                ivc.add_output("nose_wall_thickness", val=np.zeros(2), units="m", desc="Thickness of nose (also called turret or spindle)", )
-                ivc.add_output("bedplate_wall_thickness", val=np.zeros(4), units="m", desc="Thickness of hollow elliptical bedplate", )
+                ivc.add_output(
+                    "nose_diameter",
+                    val=np.zeros(2),
+                    units="m",
+                    desc="Diameter of nose (also called turret or spindle)",
+                )
+                ivc.add_output(
+                    "nose_wall_thickness",
+                    val=np.zeros(2),
+                    units="m",
+                    desc="Thickness of nose (also called turret or spindle)",
+                )
+                ivc.add_output(
+                    "bedplate_wall_thickness",
+                    val=np.zeros(4),
+                    units="m",
+                    desc="Thickness of hollow elliptical bedplate",
+                )
             else:
                 # Geared only
                 ivc.add_output("hss_length", val=0.0, units="m", desc="Length of high speed shaft")
-                ivc.add_output("hss_diameter", val=np.zeros(2), units="m", desc="Diameter of high speed shaft" )
-                ivc.add_output("hss_wall_thickness", val=np.zeros(2), units="m", desc="Wall thickness of high speed shaft" )
+                ivc.add_output("hss_diameter", val=np.zeros(2), units="m", desc="Diameter of high speed shaft")
+                ivc.add_output(
+                    "hss_wall_thickness", val=np.zeros(2), units="m", desc="Wall thickness of high speed shaft"
+                )
+                ivc.add_output("hss_mass_user", val=0.0, units="kg", desc="User override of high speed shaft mass.")
                 ivc.add_output("bedplate_flange_width", val=0.0, units="m", desc="Bedplate I-beam flange width")
                 ivc.add_output("bedplate_flange_thickness", val=0.0, units="m", desc="Bedplate I-beam flange thickness")
                 ivc.add_output("bedplate_web_thickness", val=0.0, units="m", desc="Bedplate I-beam web thickness")
-                ivc.add_discrete_output("gear_configuration", val="eep", desc="3-letter string of Es or Ps to denote epicyclic or parallel gear configuration")
-                ivc.add_discrete_output("planet_numbers", val=[3, 3, 0], desc="Number of planets for epicyclic stages (use 0 for parallel)")
+                ivc.add_discrete_output(
+                    "gear_configuration",
+                    val="eep",
+                    desc="3-letter string of Es or Ps to denote epicyclic or parallel gear configuration",
+                )
+                ivc.add_discrete_output(
+                    "planet_numbers", val=[3, 3, 0], desc="Number of planets for epicyclic stages (use 0 for parallel)"
+                )
 
-            ivc.add_output("yaw_mass_user", 0.0, units="kg")
+            ivc.add_output("yaw_system_mass_user", 0.0, units="kg")
             ivc.add_output("above_yaw_mass_user", 0.0, units="kg")
             ivc.add_output("above_yaw_cm_user", np.zeros(3), units="m")
             ivc.add_output("above_yaw_I_user", np.zeros(6), units="kg*m**2")
             # ivc.add_output("above_yaw_I_TT_user", np.zeros(6), units="kg*m**2")
-            ivc.add_output('drivetrain_spring_constant_user',     val=0, units='N*m/rad')
-            ivc.add_output('drivetrain_damping_coefficient_user',     val=0, units='N*m*s/rad')
+            ivc.add_output("drivetrain_spring_constant_user", val=0, units="N*m/rad")
+            ivc.add_output("drivetrain_damping_coefficient_user", val=0, units="N*m*s/rad")
 
 
 class Generator(om.Group):
@@ -1414,7 +1695,7 @@ class Generator(om.Group):
         # Generator inputs
         ivc.add_output("L_generator", val=0.0, units="m", desc="Generator length along shaft")
         ivc.add_output("generator_mass_user", val=0.0, units="kg")
-        ivc.add_output('generator_rotor_I_user', val=np.zeros(3), units='kg*m**2')
+        ivc.add_output("generator_rotor_I_user", val=np.zeros(3), units="kg*m**2")
 
         if not self.options["flags"]["generator"]:
             # If using simple (regression) generator scaling, this is an optional input to override default values
@@ -1592,7 +1873,8 @@ class Monopile(om.Group):
         n_layers = fixedbottomse_options["n_layers"]
 
         ivc = self.add_subsystem("monopile_indep_vars", om.IndepVarComp(), promotes=["*"])
-        ivc.add_output(            "diameter",
+        ivc.add_output(
+            "diameter",
             val=np.zeros(n_height),
             units="m",
             desc="1D array of the outer diameter values defined along the tower axis.",
@@ -1607,17 +1889,24 @@ class Monopile(om.Group):
             val=n_layers * [""],
             desc="1D array of the names of the materials of each layer modeled in the tower structure.",
         )
-        ivc.add_output("layer_thickness",
+        ivc.add_output(
+            "layer_thickness",
             val=np.zeros((n_layers, n_height)),
             units="m",
             desc="2D array of the thickness of the layers of the tower structure. The first dimension represents each layer, the second dimension represents each piecewise-constant entry of the tower sections.",
         )
-        ivc.add_output("outfitting_factor", val=0.0, desc="Multiplier that accounts for secondary structure mass inside of tower"
+        ivc.add_output(
+            "outfitting_factor", val=0.0, desc="Multiplier that accounts for secondary structure mass inside of tower"
         )
         ivc.add_output("transition_piece_mass", val=0.0, units="kg", desc="point mass of transition piece")
         ivc.add_output("transition_piece_cost", val=0.0, units="USD", desc="cost of transition piece")
         ivc.add_output("gravity_foundation_mass", val=0.0, units="kg", desc="extra mass of gravity foundation")
-        ivc.add_output("monopile_mass_user", val=0.0, units="kg", desc="Override bottom-up calculation of total monopile mass with this value")
+        ivc.add_output(
+            "monopile_mass_user",
+            val=0.0,
+            units="kg",
+            desc="Override bottom-up calculation of total monopile mass with this value",
+        )
 
         self.add_subsystem("compute_monopile_grid", Compute_Grid(n_height=n_height), promotes=["*"])
 
@@ -1632,50 +1921,64 @@ class Jacket(om.Group):
         n_legs = fixedbottomse_options["n_legs"]
 
         ivc = self.add_subsystem("jacket_indep_vars", om.IndepVarComp(), promotes=["*"])
-        ivc.add_output(            "foot_head_ratio",
+        ivc.add_output(
+            "foot_head_ratio",
             val=1.5,
             desc="Ratio of radius of foot (bottom) of jacket to head.",
         )
-        ivc.add_output(            "r_head",
+        ivc.add_output(
+            "r_head",
             val=0.0,
             units="m",
             desc="Radius of head (top) of jacket, in meters.",
         )
-        ivc.add_output(            "height",
+        ivc.add_output(
+            "height",
             val=0.0,
             units="m",
             desc="Overall jacket height, meters.",
         )
-        ivc.add_output(            "leg_diameter",
+        ivc.add_output(
+            "leg_diameter",
             val=0.0,
             units="m",
             desc="Leg diameter, meters. Constant throughout each leg.",
         )
-        ivc.add_output(            "leg_thickness",
+        ivc.add_output(
+            "leg_thickness",
             val=0.0,
             units="m",
             desc="Leg thickness, meters. Constant throughout each leg.",
         )
-        ivc.add_output(            "brace_diameters",
+        ivc.add_output(
+            "brace_diameters",
             val=np.zeros((n_bays)),
             units="m",
             desc="Brace diameter, meters. Array starts at the bottom of the jacket.",
         )
-        ivc.add_output(            "brace_thicknesses",
+        ivc.add_output(
+            "brace_thicknesses",
             val=np.zeros((n_bays)),
             units="m",
             desc="Brace thickness, meters. Array starts at the bottom of the jacket.",
         )
-        ivc.add_output(            "bay_spacing",
+        ivc.add_output(
+            "bay_spacing",
             val=np.zeros((n_bays + 1)),
             desc="Bay nodal spacing. Array starts at the bottom of the jacket.",
         )
-        ivc.add_output(            "outfitting_factor", val=0.0, desc="Multiplier that accounts for secondary structure mass inside of jacket"
+        ivc.add_output(
+            "outfitting_factor", val=0.0, desc="Multiplier that accounts for secondary structure mass inside of jacket"
         )
         ivc.add_output("transition_piece_mass", val=0.0, units="kg", desc="point mass of transition piece")
         ivc.add_output("transition_piece_cost", val=0.0, units="USD", desc="cost of transition piece")
         ivc.add_output("gravity_foundation_mass", val=0.0, units="kg", desc="extra mass of gravity foundation")
-        ivc.add_output("jacket_mass_user", val=0.0, units="kg", desc="Override bottom-up calculation of total jacket mass with this value")
+        ivc.add_output(
+            "jacket_mass_user",
+            val=0.0,
+            units="kg",
+            desc="Override bottom-up calculation of total jacket mass with this value",
+        )
 
 
 class Floating(om.Group):
@@ -1696,13 +1999,12 @@ class Floating(om.Group):
         jivc.add_output("transition_piece_cost", val=0.0, units="USD", desc="cost of transition piece")
 
         # Rigid body IVCs
-        if floating_init_options['rigid_bodies']['n_bodies'] > 0:
+        if floating_init_options["rigid_bodies"]["n_bodies"] > 0:
             rb_ivc = self.add_subsystem("rigid_bodies", om.IndepVarComp(), promotes=["*"])
-        for k in range(floating_init_options['rigid_bodies']['n_bodies']):
+        for k in range(floating_init_options["rigid_bodies"]["n_bodies"]):
             rb_ivc.add_output(f"rigid_body_{k}_node", val=np.zeros(3), units="m", desc="location of rigid body")
             rb_ivc.add_output(f"rigid_body_{k}_mass", val=0.0, units="kg", desc="point mass of rigid body")
             rb_ivc.add_output(f"rigid_body_{k}_inertia", val=np.zeros(3), units="kg*m**2", desc="inertia of rigid body")
-
 
         # Additions for optimizing individual nodes or multiple nodes concurrently
         self.add_subsystem("nodedv", NodeDVs(options=floating_init_options["joints"]), promotes=["*"])
@@ -1735,8 +2037,8 @@ class Floating(om.Group):
                             ivc.add_output("outer_diameter_in", val=0.0, units="m")
                         else:
                             ivc.add_output("outer_diameter_in", val=np.zeros(n_geom), units="m")
-                        ivc.add_output("ca_usr_geom", val=-1.0*np.ones(n_geom))
-                        ivc.add_output("cd_usr_geom", val=-1.0*np.ones(n_geom))
+                        ivc.add_output("ca_usr_geom", val=-1.0 * np.ones(n_geom))
+                        ivc.add_output("cd_usr_geom", val=-1.0 * np.ones(n_geom))
                         member_shape_assigned = True
                     if "side_length_a" in float_opt["members"]["groups"][i]:
                         if float_opt["members"]["groups"][i]["side_length_a"]["constant"]:
@@ -1744,30 +2046,30 @@ class Floating(om.Group):
                         else:
                             ivc.add_output("side_length_a_in", val=np.zeros(n_geom), units="m")
                         member_shape_assigned = True
-                        ivc.add_output("ca_usr_geom", val=-1.0*np.ones(n_geom))
-                        ivc.add_output("cd_usr_geom", val=-1.0*np.ones(n_geom))
+                        ivc.add_output("ca_usr_geom", val=-1.0 * np.ones(n_geom))
+                        ivc.add_output("cd_usr_geom", val=-1.0 * np.ones(n_geom))
                     if "side_length_b" in float_opt["members"]["groups"][i]:
                         if float_opt["members"]["groups"][i]["side_length_b"]["constant"]:
                             ivc.add_output("side_length_b_in", val=0.0, units="m")
                         else:
                             ivc.add_output("side_length_b_in", val=np.zeros(n_geom), units="m")
-                        ivc.add_output("cay_usr_geom", val=-1.0*np.ones(n_geom))
-                        ivc.add_output("cdy_usr_geom", val=-1.0*np.ones(n_geom))
+                        ivc.add_output("cay_usr_geom", val=-1.0 * np.ones(n_geom))
+                        ivc.add_output("cdy_usr_geom", val=-1.0 * np.ones(n_geom))
                         member_shape_assigned = True
 
             if not member_shape_assigned:
                 # Use the memidx to query the correct member_shape
                 if floating_init_options["members"]["outer_shape"][memidx] == "circular":
                     ivc.add_output("outer_diameter_in", val=np.zeros(n_geom), units="m")
-                    ivc.add_output("ca_usr_geom", val=-1.0*np.ones(n_geom))
-                    ivc.add_output("cd_usr_geom", val=-1.0*np.ones(n_geom))
+                    ivc.add_output("ca_usr_geom", val=-1.0 * np.ones(n_geom))
+                    ivc.add_output("cd_usr_geom", val=-1.0 * np.ones(n_geom))
                 elif floating_init_options["members"]["outer_shape"][memidx] == "rectangular":
                     ivc.add_output("side_length_a_in", val=np.zeros(n_geom), units="m")
                     ivc.add_output("side_length_b_in", val=np.zeros(n_geom), units="m")
-                    ivc.add_output("ca_usr_geom", val=-1.0*np.ones(n_geom))
-                    ivc.add_output("cd_usr_geom", val=-1.0*np.ones(n_geom))
-                    ivc.add_output("cay_usr_geom", val=-1.0*np.ones(n_geom))
-                    ivc.add_output("cdy_usr_geom", val=-1.0*np.ones(n_geom))
+                    ivc.add_output("ca_usr_geom", val=-1.0 * np.ones(n_geom))
+                    ivc.add_output("cd_usr_geom", val=-1.0 * np.ones(n_geom))
+                    ivc.add_output("cay_usr_geom", val=-1.0 * np.ones(n_geom))
+                    ivc.add_output("cdy_usr_geom", val=-1.0 * np.ones(n_geom))
 
             ivc.add_discrete_output("layer_materials", val=[""] * n_layers)
             ivc.add_output("layer_thickness_in", val=np.zeros((n_layers, n_geom)), units="m")
@@ -1788,10 +2090,23 @@ class Floating(om.Group):
             ivc.add_output("axial_stiffener_flange_width", 0.0, units="m")
             ivc.add_output("axial_stiffener_flange_thickness", 0.0, units="m")
             ivc.add_output("axial_stiffener_spacing", 0.0, units="deg")
-            ivc.add_output("member_mass_user", 0.0, units="kg", desc="Override bottom-up calculation of total member mass with this value")
+            ivc.add_output(
+                "member_mass_user",
+                0.0,
+                units="kg",
+                desc="Override bottom-up calculation of total member mass with this value",
+            )
 
             # Use the memidx to query the correct member_shape
-            self.add_subsystem(f"memgrid{k}", MemberGrid(n_height=n_height, n_geom=n_geom, n_layers=n_layers, member_shape=floating_init_options["members"]["outer_shape"][memidx]))
+            self.add_subsystem(
+                f"memgrid{k}",
+                MemberGrid(
+                    n_height=n_height,
+                    n_geom=n_geom,
+                    n_layers=n_layers,
+                    member_shape=floating_init_options["members"]["outer_shape"][memidx],
+                ),
+            )
             self.connect(f"memgrp{k}.s_in", f"memgrid{k}.s_in")
             self.connect(f"memgrp{k}.s", f"memgrid{k}.s_grid")
             # Here looping all dv member groups
@@ -1885,15 +2200,15 @@ class MemberGrid(om.ExplicitComponent):
 
         if member_shape == "circular":
             self.add_output("outer_diameter", val=np.zeros(n_height), units="m")
-            self.add_output("ca_usr_grid", val=-1.0*np.ones(n_height))
-            self.add_output("cd_usr_grid", val=-1.0*np.ones(n_height))
+            self.add_output("ca_usr_grid", val=-1.0 * np.ones(n_height))
+            self.add_output("cd_usr_grid", val=-1.0 * np.ones(n_height))
         elif member_shape == "rectangular":
             self.add_output("side_length_a", val=np.zeros(n_height), units="m")
             self.add_output("side_length_b", val=np.zeros(n_height), units="m")
-            self.add_output("ca_usr_grid", val=-1.0*np.ones(n_height))
-            self.add_output("cd_usr_grid", val=-1.0*np.ones(n_height))
-            self.add_output("cay_usr_grid", val=-1.0*np.ones(n_height))
-            self.add_output("cdy_usr_grid", val=-1.0*np.ones(n_height))
+            self.add_output("ca_usr_grid", val=-1.0 * np.ones(n_height))
+            self.add_output("cd_usr_grid", val=-1.0 * np.ones(n_height))
+            self.add_output("cay_usr_grid", val=-1.0 * np.ones(n_height))
+            self.add_output("cdy_usr_grid", val=-1.0 * np.ones(n_height))
 
         self.add_output("layer_thickness", val=np.zeros((n_layers, n_height)), units="m")
 
@@ -1977,17 +2292,20 @@ class AggregateJoints(om.ExplicitComponent):
         locations_xyz[icyl, 1] = locations[icyl, 0] * np.sin(np.deg2rad(locations[icyl, 1]))
 
         # Handle relative joints
-        joint_names = floating_init_options['joints']['name']
-        for i_joint in range(floating_init_options['joints']['n_joints']):
-            rel_joint = floating_init_options['joints']['relative'][i_joint]     # name of joint relative to this joint
-            if rel_joint != 'origin':  # is a relative joint
+        joint_names = floating_init_options["joints"]["name"]
+        for i_joint in range(floating_init_options["joints"]["n_joints"]):
+            rel_joint = floating_init_options["joints"]["relative"][i_joint]  # name of joint relative to this joint
+            if rel_joint != "origin":  # is a relative joint
                 if rel_joint not in joint_names:
-                    raise Exception(f'The relative joint {joint_names[i_joint]} is not relative to an existing joint.  Relative joint provided: {rel_joint}')
+                    raise Exception(
+                        f"The relative joint {joint_names[i_joint]} is not relative to an existing joint.  Relative joint provided: {rel_joint}"
+                    )
 
                 rel_joint_location = locations_xyz[name2idx[rel_joint]]
-                relative_dimensions = np.array(floating_init_options['joints']['relative_dims'][i_joint])  # These joints are relative
+                relative_dimensions = np.array(
+                    floating_init_options["joints"]["relative_dims"][i_joint]
+                )  # These joints are relative
                 locations_xyz[i_joint][relative_dimensions] += rel_joint_location[relative_dimensions]
-
 
         joints_xyz[:n_joints, :] = locations_xyz.copy()
 
@@ -1996,7 +2314,9 @@ class AggregateJoints(om.ExplicitComponent):
         intersects = np.zeros(n_joint_tot)
 
         if n_joints + sum(memopt["n_axial_joints"]) > n_joint_tot:
-            raise Exception(f'WISDEM has detected {n_joints + sum(memopt["n_axial_joints"])}, but only {n_joint_tot} have been defined in the yaml')
+            raise Exception(
+                f'WISDEM has detected {n_joints + sum(memopt["n_axial_joints"])}, but only {n_joint_tot} have been defined in the yaml'
+            )
 
         # Now add axial joints
         member_list = list(range(n_members))
@@ -2049,7 +2369,7 @@ class AggregateJoints(om.ExplicitComponent):
             # Don't check radius and add an intersection if the member is parallel to the one it's connecting to
             # The ghost node calculations pre-suppose that joints join orthogonal members, but if the member is parallel to another, the
             # no_intersect flag should be used.  no_intersect should be used for modeling heave plates
-            if not floating_init_options['members']['no_intersect'][k]:
+            if not floating_init_options["members"]["no_intersect"][k]:
                 Rk = 0.5 * inputs[f"member{k}_{iname}:outer_diameter"]
                 node_r[joint1id] = max(node_r[joint1id], Rk[0])
                 node_r[joint2id] = max(node_r[joint2id], Rk[-1])
@@ -2169,23 +2489,23 @@ class MooringProperties(om.ExplicitComponent):
                     "line_tangential_drag",
                 ]
                 for var in varlist:
-                    outputs[var][i_line] = d2 * inputs[var + "_coeff"]
+                    outputs[var] = d2 * inputs[var + "_coeff"]
+                line_props = None
 
             elif lm == "chain_stud":
-                line_props = getLineProps(1e3 * d[i_line]/1.89, material='chain_studlink', source='default')
+                line_props = getLineProps(1e3 * d[i_line] / 1.89, material="chain_studlink", source="default")
             else:
-                line_props = getLineProps(1e3 * d[i_line]/1.8, material='chain', source='default')
+                line_props = getLineProps(1e3 * d[i_line] / 1.8, material="chain", source="default")
             if line_props is not None:
-                outputs["line_mass_density"][i_line] = line_props['m']
-                outputs["line_stiffness"][i_line] = line_props['EA']
-                outputs["line_breaking_load"][i_line] = line_props['MBL']
-                outputs["line_cost_rate"][i_line] = line_props['cost']
+                outputs["line_mass_density"][i_line] = line_props["m"]
+                outputs["line_stiffness"][i_line] = line_props["EA"]
+                outputs["line_breaking_load"][i_line] = line_props["MBL"]
+                outputs["line_cost_rate"][i_line] = line_props["cost"]
 
-                outputs["line_transverse_added_mass"][i_line] = line_props['Ca']
-                outputs["line_tangential_added_mass"][i_line] = line_props['CaAx']
-                outputs["line_transverse_drag"][i_line] = line_props['Cd']
-                outputs["line_tangential_drag"][i_line] = line_props['CdAx']
-
+                outputs["line_transverse_added_mass"][i_line] = line_props["Ca"]
+                outputs["line_tangential_added_mass"][i_line] = line_props["CaAx"]
+                outputs["line_transverse_drag"][i_line] = line_props["Cd"]
+                outputs["line_tangential_drag"][i_line] = line_props["CdAx"]
 
 
 class MooringJoints(om.ExplicitComponent):
@@ -2231,8 +2551,8 @@ class MooringJoints(om.ExplicitComponent):
         # node_loc = np.unique(node_loc, axis=0)      # this step re-orders!  I'm not sure how there would be duplicates, unless there were duplicate mooring nodes
         depth = np.abs(node_loc[:, 2].min())
 
-        ifair = np.where(np.array(mooring_init_options['node_type']) == 'vessel')[0]
-        ianch = np.where(np.array(mooring_init_options['node_type']) == 'fixed')[0]
+        ifair = np.where(np.array(mooring_init_options["node_type"]) == "vessel")[0]
+        ianch = np.where(np.array(mooring_init_options["node_type"]) == "fixed")[0]
 
         z_fair = node_loc[ifair, 2].mean()
         z_anch = node_loc[ianch, 2].mean()
@@ -2247,9 +2567,8 @@ class MooringJoints(om.ExplicitComponent):
         outputs["fairlead_nodes"] = node_fair
         outputs["anchor_nodes"] = node_anch
         outputs["fairlead"] = -z_fair  # Positive is defined below the waterline here
-        outputs["fairlead_radius"] = np.sqrt(np.sum(node_fair[:,:2] ** 2, axis=1))
-        outputs["anchor_radius"] = np.sqrt(np.sum(node_anch[:,:2] ** 2, axis=1))
-
+        outputs["fairlead_radius"] = np.sqrt(np.sum(node_fair[:, :2] ** 2, axis=1))
+        outputs["anchor_radius"] = np.sqrt(np.sum(node_anch[:, :2] ** 2, axis=1))
 
 
 class ComputeMaterialsProperties(om.ExplicitComponent):
@@ -2329,7 +2648,8 @@ class ComputeMaterialsProperties(om.ExplicitComponent):
                 id_resin = i
         if self.options["composites"] and density_resin == 0.0:
             raise Exception(
-                "Warning: a material named resin is not defined in the input yaml.  This is required for blade composite analysis")
+                "Warning: a material named resin is not defined in the input yaml.  This is required for blade composite analysis"
+            )
 
         fvf = np.zeros(self.n_mat)
         fwf = np.zeros(self.n_mat)
@@ -2417,84 +2737,102 @@ class Materials(om.Group):
             val=np.zeros(n_mat),
             desc="1D array of flags to set whether a material is isotropic (0) or orthtropic (1). Each entry represents a material.",
         )
-        ivc.add_output("E",
+        ivc.add_output(
+            "E",
             val=np.zeros([n_mat, 3]),
             units="Pa",
             desc="2D array of the Youngs moduli of the materials. Each row represents a material, the three columns represent E11, E22 and E33.",
         )
-        ivc.add_output("G",
+        ivc.add_output(
+            "G",
             val=np.zeros([n_mat, 3]),
             units="Pa",
             desc="2D array of the shear moduli of the materials. Each row represents a material, the three columns represent G12, G13 and G23.",
         )
-        ivc.add_output("nu",
+        ivc.add_output(
+            "nu",
             val=np.zeros([n_mat, 3]),
             desc="2D array of the Poisson ratio of the materials. Each row represents a material, the three columns represent nu12, nu13 and nu23.",
         )
-        ivc.add_output("Xt",
+        ivc.add_output(
+            "Xt",
             val=np.zeros([n_mat, 3]),
             units="Pa",
             desc="2D array of the Ultimate Tensile Strength (UTS) of the materials. Each row represents a material, the three columns represent Xt12, Xt13 and Xt23.",
         )
-        ivc.add_output("Xc",
+        ivc.add_output(
+            "Xc",
             val=np.zeros([n_mat, 3]),
             units="Pa",
             desc="2D array of the Ultimate Compressive Strength (UCS) of the materials. Each row represents a material, the three columns represent Xc12, Xc13 and Xc23.",
         )
-        ivc.add_output("S",
+        ivc.add_output(
+            "S",
             val=np.zeros([n_mat, 3]),
             units="Pa",
             desc="2D array of the Ultimate Shear Strength (USS) of the materials. Each row represents a material, the three columns represent S12, S13 and S23.",
         )
-        ivc.add_output("sigma_y",
+        ivc.add_output(
+            "sigma_y",
             val=np.zeros(n_mat),
             units="Pa",
             desc="Yield stress of the material (in the principle direction for composites).",
         )
-        ivc.add_output("wohler_exp",
+        ivc.add_output(
+            "wohler_exp",
             val=np.zeros(n_mat),
             desc="Exponent of S-N Wohler fatigue curve in the form of S = A*N^-(1/m).",
         )
-        ivc.add_output("wohler_intercept",
+        ivc.add_output(
+            "wohler_intercept",
             val=np.zeros(n_mat),
             desc="Stress-intercept (A) of S-N Wohler fatigue curve in the form of S = A*N^-(1/m), taken as ultimate stress unless otherwise specified.",
         )
-        ivc.add_output("unit_cost", val=np.zeros(n_mat), units="USD/kg", desc="1D array of the unit costs of the materials."
+        ivc.add_output(
+            "unit_cost", val=np.zeros(n_mat), units="USD/kg", desc="1D array of the unit costs of the materials."
         )
-        ivc.add_output("waste", val=np.zeros(n_mat), desc="1D array of the non-dimensional waste fraction of the materials."
+        ivc.add_output(
+            "waste", val=np.zeros(n_mat), desc="1D array of the non-dimensional waste fraction of the materials."
         )
-        ivc.add_output("roll_mass",
+        ivc.add_output(
+            "roll_mass",
             val=np.zeros(n_mat),
             units="kg",
             desc="1D array of the roll mass of the composite fabrics. Non-composite materials are kept at 0.",
         )
 
         ivc.add_discrete_output("name", val=n_mat * [""], desc="1D array of names of materials.")
-        ivc.add_output("rho_fiber",
+        ivc.add_output(
+            "rho_fiber",
             val=np.zeros(n_mat),
             units="kg/m**3",
             desc="1D array of the density of the fibers of the materials.",
         )
-        ivc.add_output("rho",
+        ivc.add_output(
+            "rho",
             val=np.zeros(n_mat),
             units="kg/m**3",
             desc="1D array of the density of the materials. For composites, this is the density of the laminate.",
         )
-        ivc.add_output("rho_area_dry",
+        ivc.add_output(
+            "rho_area_dry",
             val=np.zeros(n_mat),
             units="kg/m**2",
             desc="1D array of the dry aerial density of the composite fabrics. Non-composite materials are kept at 0.",
         )
-        ivc.add_output("ply_t_from_yaml",
+        ivc.add_output(
+            "ply_t_from_yaml",
             val=np.zeros(n_mat),
             units="m",
             desc="1D array of the ply thicknesses of the materials. Non-composite materials are kept at 0.",
         )
-        ivc.add_output("fvf_from_yaml",
+        ivc.add_output(
+            "fvf_from_yaml",
             val=np.zeros(n_mat),
             desc="1D array of the non-dimensional fiber volume fraction of the composite materials. Non-composite materials are kept at 0.",
         )
-        ivc.add_output("fwf_from_yaml",
+        ivc.add_output(
+            "fwf_from_yaml",
             val=np.zeros(n_mat),
             desc="1D array of the non-dimensional fiber weight- fraction of the composite materials. Non-composite materials are kept at 0.",
         )
@@ -2582,7 +2920,7 @@ class ComputeHighLevelBladeProperties(om.ExplicitComponent):
         self.add_output("blade_solidity", val=0.0, desc="Blade solidity")
         self.add_output("rotor_solidity", val=0.0, desc="Rotor solidity")
 
-    def compute(self, inputs, outputs, discrete_inputs,  discrete_outputs):
+    def compute(self, inputs, outputs, discrete_inputs, discrete_outputs):
         outputs["blade_ref_axis"][:, 0] = inputs["blade_ref_axis_user"][:, 0]
         outputs["blade_ref_axis"][:, 1] = inputs["blade_ref_axis_user"][:, 1]
         # Scale z if the blade length provided by the user does not match the rotor diameter. D = (blade length + hub radius) * 2
@@ -2591,11 +2929,19 @@ class ComputeHighLevelBladeProperties(om.ExplicitComponent):
             outputs["blade_ref_axis"][:, 2] = (
                 inputs["blade_ref_axis_user"][:, 2]
                 * inputs["rotor_diameter_user"]
-                / ((inputs["blade_ref_axis_user"][-1,2] + inputs["hub_radius"]) * 2.0 * np.cos(np.deg2rad(inputs["cone"][0])))
+                / (
+                    (inputs["blade_ref_axis_user"][-1, 2] + inputs["hub_radius"])
+                    * 2.0
+                    * np.cos(np.deg2rad(inputs["cone"][0]))
+                )
             )
         # If the user does not provide a rotor diameter, this is computed from the hub diameter and the blade length
         else:
-            outputs["rotor_diameter"] = (inputs["blade_ref_axis_user"][-1,2] + inputs["hub_radius"]) * 2.0 * np.cos(np.deg2rad(inputs["cone"][0]))
+            outputs["rotor_diameter"] = (
+                (inputs["blade_ref_axis_user"][-1, 2] + inputs["hub_radius"])
+                * 2.0
+                * np.cos(np.deg2rad(inputs["cone"][0]))
+            )
             outputs["blade_ref_axis"][:, 2] = inputs["blade_ref_axis_user"][:, 2]
         outputs["r_blade"] = outputs["blade_ref_axis"][:, 2] + inputs["hub_radius"]
         outputs["Rtip"] = outputs["r_blade"][-1]
@@ -2606,10 +2952,14 @@ class ComputeHighLevelBladeProperties(om.ExplicitComponent):
         outputs["presweepTip"] = outputs["blade_ref_axis"][-1, 1]
         try:
             # Numpy v1/2 clash
-            outputs['blade_solidity'] = np.trapezoid(inputs['chord'], outputs["r_blade"]) / (np.pi * outputs["rotor_diameter"]**2./4.)
+            outputs["blade_solidity"] = np.trapezoid(inputs["chord"], outputs["r_blade"]) / (
+                np.pi * outputs["rotor_diameter"] ** 2.0 / 4.0
+            )
         except AttributeError:
-            outputs['blade_solidity'] = np.trapz(inputs['chord'], outputs["r_blade"]) / (np.pi * outputs["rotor_diameter"]**2./4.)
-        outputs['rotor_solidity'] = outputs['blade_solidity'] * discrete_inputs['n_blades']
+            outputs["blade_solidity"] = np.trapz(inputs["chord"], outputs["r_blade"]) / (
+                np.pi * outputs["rotor_diameter"] ** 2.0 / 4.0
+            )
+        outputs["rotor_solidity"] = outputs["blade_solidity"] * discrete_inputs["n_blades"]
 
 
 class ComputeHighLevelTowerProperties(om.ExplicitComponent):
@@ -2670,7 +3020,9 @@ class ComputeHighLevelTowerProperties(om.ExplicitComponent):
                 outputs["tower_ref_axis"] = inputs["tower_ref_axis_user"]
 
         if outputs["hub_height"][0] == 0.0:
-            raise Exception("The hub height cannot be set.  Please set it in the top level 'assembly' section in the yaml file and/or define the tower reference axis")
+            raise Exception(
+                "The hub height cannot be set.  Please set it in the top level 'assembly' section in the yaml file and/or define the tower reference axis"
+            )
 
         if modeling_options["flags"]["blade"] and inputs["rotor_diameter"] > 2.0 * outputs["hub_height"]:
             raise Exception(

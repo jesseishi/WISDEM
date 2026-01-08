@@ -206,7 +206,7 @@ class TestComponents(unittest.TestCase):
         inputs["machine_rating"] = 10e3
         inputs["D_top"] = 5.0
         inputs["rho"] = 5e3
-        inputs["yaw_mass_user"] = 0.0
+        inputs["yaw_system_mass_user"] = 0.0
         for k in inputs:
             inputs[k] = np.array( [inputs[k]] )
         myobj.compute(inputs, outputs)
@@ -214,7 +214,7 @@ class TestComponents(unittest.TestCase):
         npt.assert_equal(outputs["yaw_cm"], 0.0)
         npt.assert_equal(outputs["yaw_I"], 0.0)
 
-        inputs["yaw_mass_user"] = np.array([1e5])
+        inputs["yaw_system_mass_user"] = np.array([1e5])
         myobj.compute(inputs, outputs)
         npt.assert_equal(outputs["yaw_mass"], 1e5)
         
@@ -236,6 +236,8 @@ class TestComponents(unittest.TestCase):
         inputs["rho_fiberglass"] = 2e3
         inputs["rho_castiron"] = 3e3
         inputs["hvac_mass_coeff"] = 0.1
+        inputs['platform_mass_user'] = 0.0
+        inputs['cover_mass_user'] = 0.0
         for k in inputs:
             inputs[k] = np.array( [inputs[k]] )
         myobj.compute(inputs, outputs, discrete_inputs, discrete_outputs)
@@ -292,6 +294,8 @@ class TestComponents(unittest.TestCase):
         inputs["rho_fiberglass"] = 2e3
         inputs["rho_castiron"] = 3e3
         inputs["hvac_mass_coeff"] = 0.1
+        inputs['platform_mass_user'] = 0.0
+        inputs['cover_mass_user'] = 0.0
         for k in inputs:
             inputs[k] = np.array( [inputs[k]] )
         myobj.compute(inputs, outputs, discrete_inputs, discrete_outputs)

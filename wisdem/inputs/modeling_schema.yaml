@@ -467,6 +467,10 @@ properties:
                         minimum: 0
                         maximum: 1.e+9
                         default: 2.5e5
+                    quiet:
+                        type: boolean
+                        default: False
+                        description: Suppress screen output (currently only works for ORBIT)
             OpEx:
                 type: object
                 default: {}
@@ -588,7 +592,6 @@ properties:
                         minimum: 1
                         maximum: 4294967295
                         default: 42
-
             FloatingSE:
                 type: object
                 default: {}
