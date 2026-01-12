@@ -56,7 +56,7 @@ dependencies = [
   "numpy",
   "openmdao",
   "openpyxl",
-  "orbit-nrel>=1.2.6",
+  "orbit-nrel>=1.2.5",
   "pandas",
   "pydoe3",
   "pyyaml",
