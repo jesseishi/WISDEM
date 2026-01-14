@@ -72,7 +72,7 @@ Setup and activate the Anaconda environment from a prompt (Anaconda3 Power Shell
 
     .. code-block:: bash
 
-        git clone https://github.com/WISDEM/WISDEM.git
+        git clone https://github.com/NLRWindSystems/WISDEM.git
         cd WISDEM
 
 
