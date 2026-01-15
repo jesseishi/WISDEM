@@ -36,7 +36,8 @@ dependencies:
   - pytest-cov
   - pip
   - pip:
-    - orbit-nrel>=1.2.1
+    - orbit-nrel>=1.2.5
+    - wombat>=0.13.1
     - dearpygui
     - windIO
     - sphinxcontrib-bibtex
