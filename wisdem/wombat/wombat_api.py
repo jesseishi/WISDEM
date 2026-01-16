@@ -208,7 +208,7 @@ class WombatWisdem(om.ExplicitComponent):
         )
         self.add_input(
             "power_converter_minor_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -220,7 +220,7 @@ class WombatWisdem(om.ExplicitComponent):
         )
         self.add_input(
             "power_converter_major_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -230,7 +230,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("power_converter_replacement_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "power_converter_replacement_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -243,7 +243,7 @@ class WombatWisdem(om.ExplicitComponent):
         )
         self.add_input(
             "electrical_system_minor_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -255,7 +255,7 @@ class WombatWisdem(om.ExplicitComponent):
         )
         self.add_input(
             "electrical_system_major_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -267,7 +267,7 @@ class WombatWisdem(om.ExplicitComponent):
         )
         self.add_input(
             "electrical_system_replacement_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -283,7 +283,7 @@ class WombatWisdem(om.ExplicitComponent):
         )
         self.add_input(
             "hydraulic_pitch_system_minor_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -298,7 +298,7 @@ class WombatWisdem(om.ExplicitComponent):
         )
         self.add_input(
             "hydraulic_pitch_system_major_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -313,7 +313,7 @@ class WombatWisdem(om.ExplicitComponent):
         )
         self.add_input(
             "hydraulic_pitch_system_replacement_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -324,7 +324,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("ballast_pump_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "ballast_pump_minor_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -335,7 +335,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("yaw_system_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "yaw_system_minor_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -345,7 +345,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("yaw_system_major_repair_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "yaw_system_major_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -355,7 +355,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("yaw_system_replacement_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "yaw_system_replacement_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -366,7 +366,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("rotor_blades_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "rotor_blades_minor_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -376,7 +376,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("rotor_blades_major_repair_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "rotor_blades_major_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -386,7 +386,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("rotor_blades_replacement_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "rotor_blades_replacement_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -397,7 +397,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("generator_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "generator_minor_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -407,7 +407,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("generator_major_repair_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "generator_major_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -417,7 +417,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("generator_replacement_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "generator_replacement_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -428,7 +428,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("drive_train_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "drive_train_minor_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -438,7 +438,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("drive_train_major_repair_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "drive_train_major_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -448,7 +448,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("drive_train_replacement_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "drive_train_replacement_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -457,7 +457,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("anchor_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "anchor_minor_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -465,7 +465,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("anchor_major_repair_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "anchor_major_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -473,7 +473,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("anchor_replacement_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "anchor_replacement_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -484,7 +484,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("mooring_lines_minor_repair_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "mooring_lines_minor_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -494,7 +494,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("mooring_lines_major_repair_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "mooring_lines_major_repair_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -504,7 +504,7 @@ class WombatWisdem(om.ExplicitComponent):
         self.add_input("mooring_lines_replacement_time", -1, units="h", desc="Number of hours to complete the repair")
         self.add_input(
             "mooring_lines_replacement_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -522,7 +522,7 @@ class WombatWisdem(om.ExplicitComponent):
         )
         self.add_input(
             "mooring_lines_buoyancy_module_replacement_materials",
-            1,
+            -1,
             units="USD",
             desc="Total cost of materials used to complete the repair. If between 0 and 1, the cost is proportional to the turbine CapEx.",
         )
@@ -759,8 +759,6 @@ class WombatWisdem(om.ExplicitComponent):
             for i, failure in enumerate(config["turbines"]["base_turbine"][subassembly]["failures"]):
                 config["turbines"]["base_turbine"][subassembly]["failures"][i]["materials"] /= turbine_capex
 
-        # TODO: determine if any of the scale, time, or cost components should be removed, and how
-        # they should connect to WISDEM's other modeled values
         if (val := inputs["power_converter_minor_repair_scale"][0]) > -1:
             config["turbines"]["base_turbine"]["power_converter"]["failures"][0]["scale"] = val
         if (val := inputs["power_converter_minor_repair_time"][0]) > -1:
