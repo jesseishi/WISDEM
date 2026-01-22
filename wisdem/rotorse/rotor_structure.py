@@ -29,7 +29,7 @@ class BladeCurvature(ExplicitComponent):
         self.add_input("precurve", val=np.zeros(n_span), units="m", desc="location in blade x-coordinate")
         self.add_input("presweep", val=np.zeros(n_span), units="m", desc="location in blade y-coordinate")
         self.add_input("precone", val=0.0, units="deg", desc="precone angle")
-        self.add_input("blade_span_cg", val=0.0, units="m", desc="Distance along the blade span for its center of gravity")
+        self.add_input("blade_cg_hubcs", val=0.0, units="m", desc="Position of the blade center of gravity along the rotor radius.")
 
         # Outputs
         self.add_output(
@@ -53,7 +53,7 @@ class BladeCurvature(ExplicitComponent):
         precurve = inputs["precurve"]
         presweep = inputs["presweep"]
         precone = inputs["precone"]
-        r_cg = inputs["blade_span_cg"]
+        r_cg = inputs["blade_cg_hubcs"]
         
         n = len(r)
         dx_dx = np.eye(3 * n)
@@ -1124,7 +1124,7 @@ class RotorStructure(Group):
         self.add_subsystem(
             "curvature",
             BladeCurvature(modeling_options=modeling_options),
-            promotes=["r", "precone", "precurve", "presweep", "blade_span_cg", "3d_curv", "x_az", "y_az", "z_az"],
+            promotes=["r", "precone", "precurve", "presweep", "blade_cg_hubcs", "3d_curv", "x_az", "y_az", "z_az"],
         )
         promoteListTotalBladeLoads = ["r", "theta", "tilt", "rhoA", "3d_curv", "z_az"]
         self.add_subsystem(
