@@ -837,7 +837,7 @@ class TotalBladeProperties(ExplicitComponent):
 
         # Outputs - Overall beam properties
         self.add_output("blade_mass", val=0.0, units="kg", desc="mass of one blade")
-        self.add_output("blade_cg_hubcs", val=0.0, units="m", desc="Position of the blade center of gravity along the rotor radius.")
+        self.add_output("blade_cg_hubcs", val=0.0, units="m", desc="Position of the blade center of gravity in the hub coordinate system.")
         self.add_output(
             "blade_moment_of_inertia", val=0.0, units="kg*m**2", desc="mass moment of inertia of blade about hub"
         )

@@ -29,7 +29,7 @@ class BladeCurvature(ExplicitComponent):
         self.add_input("precurve", val=np.zeros(n_span), units="m", desc="location in blade x-coordinate")
         self.add_input("presweep", val=np.zeros(n_span), units="m", desc="location in blade y-coordinate")
         self.add_input("precone", val=0.0, units="deg", desc="precone angle")
-        self.add_input("blade_cg_hubcs", val=0.0, units="m", desc="Position of the blade center of gravity along the rotor radius.")
+        self.add_input("blade_cg_hubcs", val=0.0, units="m", desc="Position of the blade center of gravity in the hub coordinate system.")
 
         # Outputs
         self.add_output(
