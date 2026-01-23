@@ -433,7 +433,7 @@ rotorse.xl_te,,x-position of midpoint of trailing-edge panel on lower surface fo
 rotorse.yu_te,,y-position of midpoint of trailing-edge panel on upper surface for strain calculation
 rotorse.yl_te,,y-position of midpoint of trailing-edge panel on lower surface for strain calculation
 rotorse.blade_mass,kg,mass of one blade
-rotorse.blade_span_cg,m,Distance along the blade span for its center of gravity
+rotorse.blade_cg_hubcs,m,Position of the blade center of gravity in the hub coordinate system
 rotorse.blade_moment_of_inertia,kg*m**2,mass moment of inertia of blade about hub
 rotorse.mass_all_blades,kg,mass of all blades
 rotorse.I_all_blades,kg*m**2,"mass moments of inertia of all blades in hub c.s. order:Ixx, Iyy, Izz, Ixy, Ixz, Iyz"

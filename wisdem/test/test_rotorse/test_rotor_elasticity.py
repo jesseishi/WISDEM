@@ -133,7 +133,7 @@ class TestRE(unittest.TestCase):
         npt.assert_almost_equal(self.outputs["blade_mass"], self.mytube.Area*self.inputs["rho"][0]*self.inputs["r"][-1], decimal=-1)
         npt.assert_almost_equal(self.outputs["mass_all_blades"], 3*self.outputs["blade_mass"], decimal=3)
         idx = np.int_(np.floor(0.5*self.inputs["r"].size))
-        npt.assert_almost_equal(self.outputs["blade_span_cg"], self.inputs["r"][idx], decimal=1)
+        npt.assert_almost_equal(self.outputs["blade_cg_hubcs"], self.inputs["r"][idx], decimal=1)
         npt.assert_almost_equal(self.outputs["blade_moment_of_inertia"], self.outputs["blade_mass"]*self.inputs["r"][-1]**2/3.0, decimal=-1)
 
         '''
@@ -175,7 +175,7 @@ class TestRE(unittest.TestCase):
         npt.assert_almost_equal(self.outputs["blade_mass"], self.mytube.Area*self.inputs["rho"][0]*self.inputs["r"][-1], decimal=-1)
         npt.assert_almost_equal(self.outputs["mass_all_blades"], 3*self.outputs["blade_mass"], decimal=3)
         idx = np.int_(np.floor(0.5*self.inputs["r"].size))
-        npt.assert_almost_equal(self.outputs["blade_span_cg"], self.inputs["r"][idx], decimal=1)
+        npt.assert_almost_equal(self.outputs["blade_cg_hubcs"], self.inputs["r"][idx], decimal=1)
         npt.assert_almost_equal(self.outputs["blade_moment_of_inertia"], self.outputs["blade_mass"]*self.inputs["r"][-1]**2/3.0, decimal=-1)
         
         
@@ -206,7 +206,7 @@ class TestRE(unittest.TestCase):
         npt.assert_almost_equal(self.outputs["blade_mass"], self.mytube.Area*self.inputs["rho"][0]*self.inputs["r"][-1], decimal=-1)
         npt.assert_almost_equal(self.outputs["mass_all_blades"], 3*self.outputs["blade_mass"], decimal=3)
         idx = np.int_(np.floor(0.5*self.inputs["r"].size))
-        npt.assert_almost_equal(self.outputs["blade_span_cg"], self.inputs["r"][idx], decimal=1)
+        npt.assert_almost_equal(self.outputs["blade_cg_hubcs"], self.inputs["r"][idx], decimal=1)
         npt.assert_almost_equal(self.outputs["blade_moment_of_inertia"], self.outputs["blade_mass"]*self.inputs["r"][-1]**2/3.0, decimal=-1)
 
     def test_KI_to_Elastic(self):

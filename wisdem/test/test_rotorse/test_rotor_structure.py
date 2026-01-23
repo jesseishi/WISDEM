@@ -30,7 +30,7 @@ class TestRS(unittest.TestCase):
         inputs["precurve"] = myzero
         inputs["presweep"] = myzero
         inputs["precone"] = 0.0
-        inputs["blade_span_cg"] = inputs["r"].mean()
+        inputs["blade_cg_hubcs"] = inputs["r"].mean()
         myobj.compute(inputs, outputs)
         npt.assert_equal(outputs["3d_curv"], myzero)
         npt.assert_equal(outputs["x_az"], myzero)
