@@ -80,7 +80,7 @@ class RotorSEProp(om.Group):
 
         self.add_subsystem("wt_class", TurbineClass())
 
-        re_promote_add = ["r", "blade_mass", "blade_span_cg", "blade_moment_of_inertia",
+        re_promote_add = ["r", "blade_mass", "blade_cg_hubcs", "blade_moment_of_inertia",
                           "mass_all_blades", "I_all_blades"]
         if not modeling_options["user_elastic"]["blade"]:
             re_promote_add = re_promote_add + ["chord", "theta", "precurve", "presweep"]
@@ -173,7 +173,7 @@ class RotorSEPerf(om.Group):
         )
 
         # promotion list for RotorStructure
-        promoteRS = ["precurveTip", "presweepTip", "blade_span_cg"]
+        promoteRS = ["precurveTip", "presweepTip", "blade_cg_hubcs"]
         if not modeling_options["user_elastic"]["blade"]:
             # Can't promote s when designConstraint component is not added
             promoteRS = promoteRS+["s"]

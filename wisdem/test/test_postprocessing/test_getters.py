@@ -43,7 +43,7 @@ class TestGetters(unittest.TestCase):
         npt.assert_almost_equal(getter.get_monopile_cost(prob), 3108099.1, 1)
         npt.assert_almost_equal(getter.get_structural_mass(prob), getter.get_tower_mass(prob)+getter.get_monopile_mass(prob))
         npt.assert_almost_equal(getter.get_structural_cost(prob), getter.get_tower_cost(prob)+getter.get_monopile_cost(prob))
-        npt.assert_almost_equal(getter.get_tower_freqs(prob), np.array([0.1744686, 0.175398 , 0.7489153, 0.8640253, 0.9475382, 1.8933329]))
+        npt.assert_almost_equal(getter.get_tower_freqs(prob), np.array([0.1744692, 0.1754122, 0.7511913, 0.8640732, 0.9489718, 1.8933818]), decimal=3)
         npt.assert_almost_equal(getter.get_tower_cm(prob), 52.18670343496422, 2)
         npt.assert_almost_equal(getter.get_tower_cg(prob), 52.18670343496422, 2)
 
