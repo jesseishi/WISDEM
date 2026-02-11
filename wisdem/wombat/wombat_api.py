@@ -988,9 +988,7 @@ class WombatWisdem(om.ExplicitComponent):
         ).squeeze()
         outputs["total_equipment_cost"] = metrics.equipment_costs(frequency="project", by_equipment=False).squeeze()
 
-        # TODO: Do we need individual vessel/vehicle breakdowns?
-        # TODO: Create attributes for data frame breakdowns rather than make them openmdao outputs
-        discrete_outputs["equipment_cost_breakdown"] = metrics.equipment_costs(frequency="project", by_equipment=False)
+        discrete_outputs["equipment_cost_breakdown"] = metrics.equipment_costs(frequency="project", by_equipment=True)
         discrete_outputs["equipment_utilization_rate"] = metrics.service_equipment_utilization(frequency="project")
         discrete_outputs["equipment_dispatch_summary"] = metrics.dispatch_summary(frequency="project")
 
