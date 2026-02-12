@@ -53,7 +53,7 @@ WISDEM:
         controls_machine_rating_cost_coeff: 21.15
         crane_cost: 12.e+3
     OpEx:
-        flag: True
+        flag: False
         workday_start: 7
         workday_end: 19
         equipment_dispatch_distance: 116
