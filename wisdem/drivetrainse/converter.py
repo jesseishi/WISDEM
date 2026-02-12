@@ -19,7 +19,7 @@ class Converter(om.ExplicitComponent):
     
     Parameters
     ----------
-    machine_rating : float, [W]
+    machine_rating : float, [kW]
         Rated power of the converter
     f_grid : float, [Hz]
         Grid frequency
@@ -126,7 +126,7 @@ class Converter(om.ExplicitComponent):
     
     def setup(self):
         # Design parameter inputs
-        self.add_input("machine_rating", 5e6, units="W", desc="Rated power")
+        self.add_input("machine_rating", val=0.0, units="kW", desc="Rated power of the converter")
         self.add_input("f_grid", 60.0, units="Hz", desc="Grid frequency")
         self.add_input("f_sw", 1620.0, units="Hz", desc="Switching frequency")
         self.add_input("V_dc_drop", 0.05, desc="DC voltage drop [pu]")
@@ -188,9 +188,9 @@ class Converter(om.ExplicitComponent):
             raise ValueError("step must be > 0")
         return step * np.ceil(x / step)
     
-    def _interpolate_v_levels(self, machine_rating_W, v_step_V):
+    def _interpolate_v_levels(self, machine_rating_kW, v_step_V):
         """Linear interpolation of VLL_rms and Vdc based on WT ratings"""
-        P_MW = machine_rating_W / 1e6
+        P_MW = machine_rating_kW / 1e3
         table = self.DEFAULT_RATING_TABLE
         
         if P_MW <= table[0][0]:
@@ -215,7 +215,8 @@ class Converter(om.ExplicitComponent):
     
     def _converter_lc_design(self, inputs):
         """Main LC filter design calculations"""
-        machine_rating = inputs["machine_rating"]
+        machine_rating_kW = inputs["machine_rating"]
+        machine_rating_W = machine_rating_kW * 1e3
         f_grid = inputs["f_grid"]
         V_dc_drop = inputs["V_dc_drop"]
         m_max = inputs["m_max"]
@@ -227,10 +228,10 @@ class Converter(om.ExplicitComponent):
         l_step_uH = inputs["l_step_uH"]
         
         # Get voltage levels
-        V_LL_rms, Vdc = self._interpolate_v_levels(machine_rating, v_step_V)
+        V_LL_rms, Vdc = self._interpolate_v_levels(machine_rating_kW, v_step_V)
         
         w0 = 2 * np.pi * f_grid
-        I_rms = machine_rating / (np.sqrt(3) * V_LL_rms)
+        I_rms = machine_rating_W / (np.sqrt(3) * V_LL_rms)
         I_pk = I_rms * np.sqrt(2)
         
         # Minimum DC voltage required
@@ -242,7 +243,7 @@ class Converter(om.ExplicitComponent):
         Lf = Lf_uH * 1e-6
         
         # AC filter capacitor
-        Q_cap = Q_cap_pu * machine_rating
+        Q_cap = Q_cap_pu * machine_rating_W
         Cf = Q_cap / (w0 * V_LL_rms**2)
         
         # Resonant frequency and damping
@@ -251,7 +252,7 @@ class Converter(om.ExplicitComponent):
         Rf = (1 / Q_factor) * np.sqrt(Lf / Cf)
         
         # DC link capacitor
-        Cdc_raw_F = machine_rating / (2 * Vdc**2 * V_dc_ripple * w0)
+        Cdc_raw_F = machine_rating_W / (2 * Vdc**2 * V_dc_ripple * w0)
         Cdc_uF = self._ceil_to_step(Cdc_raw_F * 1e6, c_step_uF)
         Cdc = Cdc_uF * 1e-6
         
@@ -260,7 +261,7 @@ class Converter(om.ExplicitComponent):
         E_ind = 0.5 * Lf * I_pk**2
         
         return {
-            "P_MW": machine_rating / 1e6,
+            "P_MW": machine_rating_kW / 1e3,
             "V_LL_rms_V": V_LL_rms,
             "Vdc_V": Vdc,
             "Vdc_min_V": Vdc_min,
