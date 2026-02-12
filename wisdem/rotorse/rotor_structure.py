@@ -29,8 +29,7 @@ class BladeCurvature(ExplicitComponent):
         self.add_input("precurve", val=np.zeros(n_span), units="m", desc="location in blade x-coordinate")
         self.add_input("presweep", val=np.zeros(n_span), units="m", desc="location in blade y-coordinate")
         self.add_input("precone", val=0.0, units="deg", desc="precone angle")
-        self.add_input("Rhub", val=0.0, units="m", desc="hub radius")
-        self.add_input("blade_span_cg", val=0.0, units="m", desc="Distance along the blade span for its center of gravity")
+        self.add_input("blade_cg_hubcs", val=0.0, units="m", desc="Position of the blade center of gravity in the hub coordinate system.")
 
         # Outputs
         self.add_output(
@@ -49,12 +48,12 @@ class BladeCurvature(ExplicitComponent):
         self.add_output("blades_cg_hubcc", val=0.0, units="m", desc="cg of all blades relative to hub along shaft axis. Distance is should be interpreted as negative for upwind and positive for downwind turbines")
 
     def compute(self, inputs, outputs):
+        # Note that r[0]=Rhub here
         r = inputs["r"]
         precurve = inputs["precurve"]
         presweep = inputs["presweep"]
         precone = inputs["precone"]
-        r_cg = inputs["blade_span_cg"]
-        Rhub = inputs["Rhub"]
+        r_cg = inputs["blade_cg_hubcs"]
         
         n = len(r)
         dx_dx = np.eye(3 * n)
@@ -74,7 +73,7 @@ class BladeCurvature(ExplicitComponent):
 
         # Compute cg location of all blades in hub coordinates
         cone_cg = np.interp(r_cg, r, totalCone)
-        cg = (r_cg + Rhub) * np.sin(np.deg2rad(cone_cg))
+        cg = r_cg * np.sin(np.deg2rad(cone_cg))
         outputs["blades_cg_hubcc"] = cg
 
 
@@ -1125,7 +1124,7 @@ class RotorStructure(Group):
         self.add_subsystem(
             "curvature",
             BladeCurvature(modeling_options=modeling_options),
-            promotes=["r", "precone", "precurve", "presweep", "Rhub", "blade_span_cg", "3d_curv", "x_az", "y_az", "z_az"],
+            promotes=["r", "precone", "precurve", "presweep", "blade_cg_hubcs", "3d_curv", "x_az", "y_az", "z_az"],
         )
         promoteListTotalBladeLoads = ["r", "theta", "tilt", "rhoA", "3d_curv", "z_az"]
         self.add_subsystem(

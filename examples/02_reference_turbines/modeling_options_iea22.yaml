@@ -72,7 +72,7 @@ WISDEM:
         flag: True
         workday_start: 7
         workday_end: 19
-        equipment_dispatch_distance: 116
+        equipment_dispatch_distance: 139
         n_ctv: 3
         maintenance_start: None
         non_operational_start: None

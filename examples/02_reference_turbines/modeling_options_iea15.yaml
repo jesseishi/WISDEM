@@ -49,13 +49,6 @@ WISDEM:
         reduced_speed: 0
         n_hlv: 1
         random_seed: 42
-        # TODO: move to floating example?
-        # n_tugboat: 2
-        # port_workday_start: 6
-        # port_workday_end: 18
-        # n_port_crews: 2
-        # max_port_operations: 2
-        # repair_port_distance: 116
     LCOE:
         flag: True
         wake_loss_factor: 0.15
