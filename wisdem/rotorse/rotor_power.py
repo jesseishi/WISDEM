@@ -38,7 +38,7 @@ class RotorPower(Group):
                 "rated_power",
                 "omega_min",
                 "omega_max",
-                "control_maxTS",
+                "max_allowable_TS",
                 "tsr_operational",
                 "control_pitch",
                 "drivetrainType",
@@ -160,7 +160,7 @@ class ComputePowerCurve(ExplicitComponent):
         self.add_input("rated_power", val=0.0, units="W", desc="electrical rated power")
         self.add_input("omega_min", val=0.0, units="rpm", desc="minimum allowed rotor rotation speed")
         self.add_input("omega_max", val=0.0, units="rpm", desc="maximum allowed rotor rotation speed")
-        self.add_input("control_maxTS", val=0.0, units="m/s", desc="maximum allowed blade tip speed")
+        self.add_input("max_allowable_TS", val=0.0, units="m/s", desc="maximum allowed blade tip speed")
         self.add_input("tsr_operational", val=0.0, desc="tip-speed ratio in Region 2 (should be optimized externally)")
         self.add_input(
             "control_pitch",
@@ -168,7 +168,7 @@ class ComputePowerCurve(ExplicitComponent):
             units="deg",
             desc="pitch angle in region 2 (and region 3 for fixed pitch machines)",
         )
-        self.add_input("ps_percent", val=1.0, desc="Scalar applied to the max torque within RotorSE for peak thrust shaving. Only used if `peak_thrust_shaving` is True.")
+        self.add_input("peak_thrust_shaving", val=1.0, desc="Scalar applied to the max torque within RotorSE for peak thrust shaving. Only used if `peak_thrust_shaving` is True.")
 
         self.add_discrete_input("drivetrainType", val="GEARED")
         self.add_input("gearbox_efficiency", val=1.0)
@@ -294,7 +294,8 @@ class ComputePowerCurve(ExplicitComponent):
                 rated_power=inputs["rated_power"],
                 omega_min=inputs["omega_min"],
                 omega_max=inputs["omega_max"],
-                control_maxTS=inputs["control_maxTS"],
+                max_allowable_TS=inputs["max_allowable_TS"],
+                peak_thrust_shaving=inputs["peak_thrust_shaving"],
                 tsr_operational=inputs["tsr_operational"],
                 control_pitch=inputs["control_pitch"],
                 gearbox_efficiency=inputs["gearbox_efficiency"],
@@ -393,7 +394,7 @@ class ComputePowerCurve(ExplicitComponent):
         Omega_tsr = Uhub * tsr / Rtip_cone
 
         # Determine maximum rotor speed (rad/s)- either by TS or by control input
-        Omega_max = min([float(inputs["control_maxTS"][0]) / Rtip_cone,
+        Omega_max = min([inputs["max_allowable_TS"][0] / Rtip_cone,
                          float(inputs["omega_max"][0]) * np.pi / 30.0])
 
         # Apply maximum and minimum rotor speed limits
@@ -447,12 +448,12 @@ class ComputePowerCurve(ExplicitComponent):
         region2p5 = U_2p5 < U_rated
 
         # Initialize peak shaving thrust value, will be updated later
-        ps_percent = float(inputs["ps_percent"][0])
-        if ps_percent < 1.:
+        if inputs["peak_thrust_shaving"][0] < 1.:
             peak_thrust_shaving = True
+            pts = inputs["peak_thrust_shaving"][0]
         else:
             peak_thrust_shaving = False
-        max_T = ps_percent * T.max() if peak_thrust_shaving and found_rated else 1e16
+        max_T = pts * T.max() if peak_thrust_shaving and found_rated else 1e16
 
         ## REGION II.5 and RATED ##
         # Solve for rated velocity
@@ -533,7 +534,7 @@ class ComputePowerCurve(ExplicitComponent):
 
             ## REGION II.5 and RATED with peak shaving##
             if peak_thrust_shaving:
-                max_T = ps_percent * T_rated
+                max_T = pts * T_rated
 
                 def const_Urated_Tpeak(x):
                     pitch_i = x[0]

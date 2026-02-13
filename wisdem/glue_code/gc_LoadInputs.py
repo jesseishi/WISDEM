@@ -1405,9 +1405,9 @@ class WindTurbineOntologyPython(object):
 
         # Update controller
         if self.modeling_options["flags"]["control"]:
-            self.wt_init["control"]["torque"]["tsr"] = float(wt_opt["control.rated_TSR"][0])
-            if "ROSCO" not in self.modeling_options:  # If using WEIS, will have ROSCO, and ps_percent will be set there
-                self.wt_init["control"]["pitch"]["ps_percent"] = float(wt_opt["control.ps_percent"][0])
+            self.wt_init["control"]["optimal_tsr"] = float(wt_opt["control.rated_TSR"][0])
+            if "ROSCO" not in self.modeling_options:  # If using WEIS, will have ROSCO, and peak_thrust_shaving will be set there
+                self.wt_init["control"]["peak_thrust_shaving"] = float(wt_opt["control.peak_thrust_shaving"][0])
 
         # Update cost coefficients
         if self.modeling_options["flags"]["costs"]:

@@ -596,6 +596,22 @@ properties:
                         description: Override bottom-up calculation of total jacket mass with this value
                         minimum: 0.0
 
+    control:
+        type: object
+        default: {}
+        properties:
+            max_allowable_blade_tip_speed:
+                type: number
+                default: 0.0
+                units: m/s
+                description: Maximum allowable blade tip speed in m/s. If zero, no tip speed limit is enforced.
+            peak_thrust_shaving:
+                type: number
+                default: 0.8
+                minimum: 0.0
+                maximum: 1.0
+                description: Scalar applied to the max thrust within RotorSE for peak thrust shaving. If 1, no shaving is applied.
+
 definitions:
     distributed_data:
         grid_al:

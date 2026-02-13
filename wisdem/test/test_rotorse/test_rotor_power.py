@@ -445,9 +445,9 @@ class TestServo(unittest.TestCase):
 
         # All reg 2: no maxTS, no max rpm, no power limit
         prob["omega_max"] = 1e3
-        prob["control_maxTS"] = 1e5
+        prob["max_allowable_TS"] = 1e5
         prob["rated_power"] = 1e16
-        prob["ps_percent"] = 0.8
+        prob["peak_thrust_shaving"] = 0.8
         prob.run_model()
 
         grid0 = np.cumsum(np.abs(np.diff(np.cos(np.linspace(-np.pi / 4.0, np.pi / 2.0, n_pc)))))
@@ -530,10 +530,10 @@ class TestServo(unittest.TestCase):
         prob["omega_max"] = 1e3
         prob["control_maxTS"] = 1e4
         prob["rated_power"] = 5e6
-        prob["ps_percent"] = 1.0
+        prob["peak_thrust_shaving"] = 1.0
         prob.run_model()
         T_peak = max(prob["T"])
-        prob["ps_percent"] = 0.8
+        prob["peak_thrust_shaving"] = 0.8
         prob.run_model()
         V_expect1 = np.sort(np.r_[V_expect0, prob["rated_V"]])
         Omega_tsr = V_expect1 * 10 * 60 / 70.0 / 2.0 / np.pi
@@ -546,7 +546,7 @@ class TestServo(unittest.TestCase):
         npt.assert_array_almost_equal(prob["Cp"], prob["Cp_aero"] * 0.975 * 0.975)
         npt.assert_array_less(prob["P"][:irated], prob["P"][1 : (irated + 1)])
         npt.assert_allclose(prob["P"][irated:], 5e6, rtol=1e-4, atol=0)
-        npt.assert_array_less(prob["T"], 1.01 * prob["ps_percent"][0] * T_peak) # within 1%
+        npt.assert_array_less(prob["T"], 1.01 * prob["peak_thrust_shaving"][0] * T_peak) # within 1%
         self.assertAlmostEqual(prob["rated_Omega"][0], Omega_expect[-1])
         self.assertGreater(prob["rated_pitch"], 0.0)
         myCp = prob["P"] / (0.5 * 1.225 * V_expect1**3.0 * np.pi * 70**2)

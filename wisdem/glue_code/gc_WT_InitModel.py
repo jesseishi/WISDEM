@@ -1429,23 +1429,21 @@ def assign_mooring_values(wt_opt, modeling_options, mooring):
 
 def assign_control_values(wt_opt, modeling_options, control):
     # Controller parameters
-    wt_opt["control.V_in"] = control["supervisory"]["Vin"]
-    wt_opt["control.V_out"] = control["supervisory"]["Vout"]
-    wt_opt["control.minOmega"] = control["torque"]["VS_minspd"]
-    wt_opt["control.maxOmega"] = control["torque"]["VS_maxspd"]
-    wt_opt["control.rated_TSR"] = control["torque"]["tsr"]
-    wt_opt["control.rated_pitch"] = control["pitch"]["min_pitch"]
-    wt_opt["control.max_TS"] = control["supervisory"]["maxTS"]
-    wt_opt["control.max_pitch_rate"] = control["pitch"]["max_pitch_rate"]
-    wt_opt["control.max_torque_rate"] = control["torque"]["max_torque_rate"]
+    wt_opt["control.V_in"] = min(control["min_pitch_table"]["wind_speed"])
+    wt_opt["control.V_out"] = max(control["min_pitch_table"]["wind_speed"])
+    wt_opt["control.minOmega"] = control["min_rotor_speed"]
+    wt_opt["control.maxOmega"] = control["max_rotor_speed"]
+    wt_opt["control.rated_TSR"] = control["optimal_tsr"]
+    wt_opt["control.rated_pitch"] = control["min_pitch_limit"]
+    wt_opt["control.max_allowable_TS"] = control["max_allowable_blade_tip_speed"]
 
     if "ROSCO" in modeling_options:  # Will only be there if called by WEIS
-        if modeling_options["ROSCO"]["ps_percent"] != control["pitch"]["ps_percent"]:
+        if modeling_options["ROSCO"]["ps_percent"] != control["peak_thrust_shaving"]:
             logger.warning(
-                f"The ROSCO (modeling) ps_percent does not match the WindIO (geometry) ps_percent.  Using the ROSCO value of {modeling_options['ROSCO']['ps_percent']:.2f}."
+                f"The ROSCO (modeling) ps_percent does not match the WindIO (geometry) peak_thrust_shaving.  Using the ROSCO value of {modeling_options['ROSCO']['ps_percent']:.2f}."
             )
     else:
-        wt_opt["control.ps_percent"] = control["pitch"]["ps_percent"]
+        wt_opt["control.peak_thrust_shaving"] = control["peak_thrust_shaving"]
 
     return wt_opt
 

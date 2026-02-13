@@ -151,14 +151,12 @@ class WindTurbineOntologyOpenMDAO(om.Group):
             )
             ctrl_ivc.add_output("minOmega", val=0.0, units="rpm", desc="Minimum allowed rotor speed.")
             ctrl_ivc.add_output("maxOmega", val=0.0, units="rpm", desc="Maximum allowed rotor speed.")
-            ctrl_ivc.add_output("max_TS", val=0.0, units="m/s", desc="Maximum allowed blade tip speed.")
-            ctrl_ivc.add_output("max_pitch_rate", val=0.0, units="deg/s", desc="Maximum allowed blade pitch rate")
-            ctrl_ivc.add_output("max_torque_rate", val=0.0, units="N*m/s", desc="Maximum allowed generator torque rate")
+            ctrl_ivc.add_output("max_allowable_TS", val=0.0, units="m/s", desc="Maximum allowed blade tip speed.")
             ctrl_ivc.add_output("rated_TSR", val=0.0, desc="Constant tip speed ratio in region II.")
             ctrl_ivc.add_output("rated_pitch", val=0.0, units="deg", desc="Constant pitch angle in region II.")
-            if "ROSCO" not in modeling_options:  # If using WEIS, ps_percent will be set there
+            if "ROSCO" not in modeling_options:  # If using WEIS, peak_thrust_shaving will be set there
                 ctrl_ivc.add_output(
-                    "ps_percent",
+                    "peak_thrust_shaving",
                     val=1.0,
                     desc="Scalar applied to the max thrust within RotorSE for peak thrust shaving.",
                 )
@@ -476,7 +474,6 @@ class WindTurbineOntologyOpenMDAO(om.Group):
             self.connect("blade.pa.chord_param", "af_3d.chord")
             self.connect("control.rated_TSR", "af_3d.rated_TSR")
             self.connect("control.maxOmega", "blade.compute_reynolds.maxOmega")
-            self.connect("control.max_TS", "blade.compute_reynolds.max_TS")
             self.connect("control.V_out", "blade.compute_reynolds.V_out")
         if modeling_options["flags"]["tower"]:
             self.connect("tower.ref_axis", "high_level_tower_props.tower_ref_axis_user")
