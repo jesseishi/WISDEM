@@ -69,6 +69,20 @@ WISDEM:
         tower_mass_cost_coeff: 2.9
         controls_machine_rating_cost_coeff: 21.15
         crane_cost: 12000.0
+    OpEx:
+        flag: True
+        workday_start: 7
+        workday_end: 19
+        equipment_dispatch_distance: 116
+        n_ctv: 3
+        maintenance_start: None
+        non_operational_start: None
+        non_operational_end: None
+        reduced_speed_start: None
+        reduced_speed_end: None
+        reduced_speed: 0
+        n_hlv: 1
+        random_seed: 42
 
 Environment:
     air_density: 1.225

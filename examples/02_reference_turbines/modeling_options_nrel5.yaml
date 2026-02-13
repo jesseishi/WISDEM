@@ -53,6 +53,8 @@ WISDEM:
         tower_mass_cost_coeff: 2.9
         controls_machine_rating_cost_coeff: 21.15
         crane_cost: 12e3
+    OpEx:
+        flag: False
 Environment:
     air_density: 1.225
     air_dyn_viscosity: 1.81e-5
