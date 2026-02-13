@@ -471,6 +471,127 @@ properties:
                         type: boolean
                         default: False
                         description: Suppress screen output (currently only works for ORBIT)
+            OpEx:
+                type: object
+                default: {}
+                properties:
+                    flag: *flag
+                    workday_start:
+                        type: number
+                        description: Hour of the day where any work-related activities begin.
+                        units: hours
+                        minimum: 0
+                        maximum: 24
+                        default: 7
+                    workday_end:
+                        type: number
+                        description: Hour of the day where any work-related activities end.
+                        units: hours
+                        minimum: 0
+                        maximum: 24
+                        default: 19
+                    equipment_dispatch_distance:
+                        type: number
+                        description: Distance, in km, that servicing equipment must travel daily to reach the wind farm.
+                        units: km
+                        minimum: 0
+                        maximum: 1e3
+                        default: 50
+                    n_ctv:
+                        type: number
+                        description: Number of crew transfer vessels (offshore) or onsite trucks (land-based) that should be made available to the wind farm.
+                        units: unitless
+                        minimum: 1
+                        maximum: 20
+                        default: 3
+                    n_hlv:
+                        type: number
+                        description: Number of heavy lift vessels (fixed-bottom offshore) or crawler cranes (land-based) that should be made available to the wind farm.
+                        units: unitless
+                        minimum: 1
+                        maximum: 10
+                        default: 1
+                    n_tugboat:
+                        type: number
+                        description: Number of tugboat groups that should be available to the port to tow floating turbines to port and back.
+                        units: unitless
+                        minimum: 1
+                        maximum: 10
+                        default: 2
+                    port_workday_start:
+                        type: number
+                        description: Hour of the day where any work-related activities begin for port-side repairs.
+                        units: hours
+                        minimum: 0
+                        maximum: 24
+                        default: 6
+                    port_workday_end:
+                        type: number
+                        description: Hour of the day where any work-related activities end for port-side repairs.
+                        units: hours
+                        minimum: 0
+                        maximum: 24
+                        default: 18
+                    n_port_crews:
+                        type: number
+                        description: Number of port-side crews available to work on simultaneous repairs for any at-port turbine.
+                        units: unitless
+                        minimum: 1
+                        maximum: 100
+                        default: 2
+                    max_port_operations:
+                        type: number
+                        description: Number of turbines that can be at port at once.
+                        units: unitless
+                        minimum: 1
+                        maximum: 100
+                        default: 2
+                    repair_port_distance:
+                        type: number
+                        description: Distance, in km, that tugboats must travel to reach the wind farm for tow-to-port repairs.
+                        units: km
+                        minimum: 0
+                        maximum: 1e3
+                        default: 116
+                    maintenance_start:
+                        type: string
+                        description: Starting date, in MM/DD format; year will be inserted automatically based on input to `years`.
+                        units: unitless
+                        default: "none"
+                    non_operational_start:
+                        type: string
+                        description: Starting date, in MM/DD format, for an annual period where the site is inaccessible.
+                        units: string
+                        default: "none"
+                    non_operational_end:
+                        type: string
+                        description: Ending date, in MM/DD format, for an annual period where the site is inaccessible.
+                        units: unitless
+                        default: "none"
+                    reduced_speed_start:
+                        type: string
+                        description: Starting date, in MM/DD format, for an annual period where traveling speed is reduced.
+                        units: unitless
+                        default: "none"
+                    reduced_speed_end:
+                        type: string
+                        description: Ending date, in MM/DD format, for an annual period where traveling speed is reduced.
+                        units: unitless
+                        default: "none"
+                    reduced_speed:
+                        type: number
+                        description: Reduced speed applied to servicing equipment in the reduced speed period.
+                        units: km/h
+                        minimum: 0
+                        maximum: 100
+                        default: 0
+                    random_seed:
+                        type: number
+                        description: Random seed for the internal random generator.
+                        units: "none"
+                        minimum: 1
+                        maximum: 4294967295
+                        default: 42
             FloatingSE:
                 type: object
                 default: {}
