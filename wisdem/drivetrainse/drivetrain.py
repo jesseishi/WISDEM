@@ -7,7 +7,7 @@ import wisdem.drivetrainse.drive_components as dc
 from wisdem.drivetrainse.hub import Hub_System
 from wisdem.drivetrainse.gearbox import Gearbox
 from wisdem.drivetrainse.generator import Generator
-
+from wisdem.drivetrainse.converter import Converter
 
 class DriveMaterials(om.ExplicitComponent):
     """
@@ -237,6 +237,9 @@ class DrivetrainSE(om.Group):
 
         # Dynamics
         self.add_subsystem("dyn", dc.DriveDynamics(), promotes=["*"])
+
+        # Converter costs and efficiency
+        self.add_subsystem("converter", Converter(), promotes=["machine_rating"])
 
         # Output-to-input connections
         self.connect("bedplate_rho", ["pitch_system.rho", "spinner.metal_rho"])

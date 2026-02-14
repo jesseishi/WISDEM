@@ -832,6 +832,7 @@ class WT_RNTA(om.Group):
                 self.connect("drivese.total_bedplate_mass", "tcc.bedplate_mass")
                 self.connect("drivese.yaw_mass", "tcc.yaw_mass")
                 self.connect("drivese.converter_mass", "tcc.converter_mass")
+                self.connect("drivese.converter.Cost_B2B", "tcc.converter_cost_external")
                 self.connect("drivese.transformer_mass", "tcc.transformer_mass")
                 self.connect("drivese.hvac_mass", "tcc.hvac_mass")
                 self.connect("drivese.cover_mass", "tcc.cover_mass")
