@@ -115,20 +115,20 @@ class TestServo(unittest.TestCase):
         myobj.compute(inputs, outputs)
 
         ref_no_stall_constraint = np.array([0.        , 0.        , 0.        , 0.        , 0.        ,
-            0.        , 0.        , 0.67118396, 0.790765  , 0.91126711,
-            1.04726257, 1.07996108, 1.10021102, 1.10700111, 1.11135515,
-            1.11887215, 1.12847682, 1.13645538, 1.14486372, 1.14846378,
-            1.13405906, 1.13241738, 1.11592884, 1.11454111, 1.11388991,
-            1.11688013, 1.13381233, 1.14722555, 1.13538874, 0.92356469])
+            0.        , 0.        , 0.70033738, 0.75218097, 0.79315049,
+            0.82765667, 0.86538097, 0.95065128, 1.04466023, 1.09225808,
+            1.11726308, 1.13587504, 1.13809885, 1.13778982, 1.12488231,
+            1.07696038, 1.07288003, 1.07288003, 1.07288003, 1.07288003,
+            1.07288003, 1.07288003, 1.07288003, 1.07288003, 1.07288003])
         
-        ref_stall_angle_along_span = np.array([1.00000000e-06, 3.12001944e+00, 2.80452784e+00, 3.57331530e+01,
-            3.02078680e+01, 2.60958541e+01, 2.26989830e+01, 1.48990450e+01,
-            1.26459821e+01, 1.09737309e+01, 9.54870368e+00, 9.25959294e+00,
-            9.08916542e+00, 9.03341461e+00, 8.99802368e+00, 8.93757165e+00,
-            8.86150239e+00, 8.79928960e+00, 8.73466410e+00, 8.70728371e+00,
-            8.81788291e+00, 8.83066627e+00, 8.96114484e+00, 8.97230255e+00,
-            8.97754785e+00, 8.95351232e+00, 8.81980176e+00, 8.71668173e+00,
-            8.80755609e+00, 1.08276119e+01])
+        ref_stall_angle_along_span = np.array([1.00000000e-06, 6.20764268e+01, 3.05626324e+00, 3.71512410e+01,
+            2.65640306e+01, 2.13870345e+01, 1.55639231e+01, 1.42788322e+01,
+            1.32946730e+01, 1.26079478e+01, 1.20823046e+01, 1.15556042e+01,
+            1.05191044e+01, 9.57249039e+00, 9.15534539e+00, 8.95044341e+00,
+            8.80378528e+00, 8.78658297e+00, 8.78896951e+00, 8.88981886e+00,
+            9.28539266e+00, 9.32070663e+00, 9.32070663e+00, 9.32070663e+00,
+            9.32070663e+00, 9.32070663e+00, 9.32070663e+00, 9.32070663e+00,
+            9.32070663e+00, 9.32070663e+00])
         
         npt.assert_almost_equal(outputs["no_stall_constraint"], ref_no_stall_constraint)
         npt.assert_almost_equal(outputs["stall_angle_along_span"], ref_stall_angle_along_span)
@@ -237,10 +237,11 @@ class TestServo(unittest.TestCase):
         npt.assert_allclose(myCp[:irated], myCp[0])
         npt.assert_allclose(myCp[:irated], prob["Cp"][:irated])
 
-        # Test no maxTS, no max rpm, power limit
+        # Test no maxTS, no max rpm, power limit, no peak shaving
         prob["omega_max"] = 1e3
         prob["max_allowable_TS"] = 1e4
         prob["rated_power"] = 5e6
+        prob["peak_thrust_shaving"] = 1.0
         prob.run_model()
         V_expect1 = np.sort(np.r_[V_expect0, prob["rated_V"]])
         Omega_tsr = V_expect1 * 10 * 60 / 70.0 / 2.0 / np.pi
@@ -362,10 +363,11 @@ class TestServo(unittest.TestCase):
         )
         prob = fillprob(prob, n_pc, n_span)
 
-        # All reg 2: no maxTS, no max rpm, no power limit
+        # All reg 2: no maxTS, no max rpm, no power limit, no peak shaving
         prob["omega_max"] = 1e3
         prob["max_allowable_TS"] = 1e5
         prob["rated_power"] = 1e16
+        prob["peak_thrust_shaving"] = 1.0
         prob.run_model()
 
         grid0 = np.cumsum(np.abs(np.diff(np.cos(np.linspace(-np.pi / 4.0, np.pi / 2.0, n_pc)))))
