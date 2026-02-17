@@ -38,7 +38,7 @@ class RotorPower(Group):
                 "rated_power",
                 "omega_min",
                 "omega_max",
-                "max_allowable_TS",
+                "max_allowable_blade_tip_speed",
                 "tsr_operational",
                 "control_pitch",
                 "drivetrainType",
@@ -160,7 +160,7 @@ class ComputePowerCurve(ExplicitComponent):
         self.add_input("rated_power", val=0.0, units="W", desc="electrical rated power")
         self.add_input("omega_min", val=0.0, units="rpm", desc="minimum allowed rotor rotation speed")
         self.add_input("omega_max", val=0.0, units="rpm", desc="maximum allowed rotor rotation speed")
-        self.add_input("max_allowable_TS", val=0.0, units="m/s", desc="maximum allowed blade tip speed")
+        self.add_input("max_allowable_blade_tip_speed", val=0.0, units="m/s", desc="maximum allowed blade tip speed")
         self.add_input("tsr_operational", val=0.0, desc="tip-speed ratio in Region 2 (should be optimized externally)")
         self.add_input(
             "control_pitch",
@@ -294,7 +294,7 @@ class ComputePowerCurve(ExplicitComponent):
                 rated_power=inputs["rated_power"],
                 omega_min=inputs["omega_min"],
                 omega_max=inputs["omega_max"],
-                max_allowable_TS=inputs["max_allowable_TS"],
+                max_allowable_blade_tip_speed=inputs["max_allowable_blade_tip_speed"],
                 peak_thrust_shaving=inputs["peak_thrust_shaving"],
                 tsr_operational=inputs["tsr_operational"],
                 control_pitch=inputs["control_pitch"],
@@ -393,8 +393,8 @@ class ComputePowerCurve(ExplicitComponent):
         Omega_tsr = Uhub * tsr / Rtip_cone
 
         # Determine maximum rotor speed (rad/s)- either by TS or by control input
-        if inputs["max_allowable_TS"][0] > 0.0:
-            Omega_max = min([inputs["max_allowable_TS"][0] / Rtip_cone,
+        if inputs["max_allowable_blade_tip_speed"][0] > 0.0:
+            Omega_max = min([inputs["max_allowable_blade_tip_speed"][0] / Rtip_cone,
                          float(inputs["omega_max"][0]) * np.pi / 30.0])
         else:
             Omega_max = float(inputs["omega_max"][0]) * np.pi / 30.0

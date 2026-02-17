@@ -167,7 +167,7 @@ class WT_RNTA(om.Group):
             self.connect("configuration.rated_power", "rotorse.rp.rated_power")
             self.connect("control.minOmega", "rotorse.rp.omega_min")
             self.connect("control.maxOmega", "rotorse.rp.omega_max")
-            self.connect("control.max_allowable_TS", "rotorse.rp.max_allowable_TS")
+            self.connect("control.max_allowable_blade_tip_speed", "rotorse.rp.max_allowable_blade_tip_speed")
             self.connect("configuration.gearbox_type", "rotorse.rp.drivetrainType")
             self.connect("drivetrain.gearbox_efficiency", "rotorse.rp.powercurve.gearbox_efficiency")
             if modeling_options["flags"]["drivetrain"]:

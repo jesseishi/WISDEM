@@ -1435,7 +1435,7 @@ def assign_control_values(wt_opt, modeling_options, control):
     wt_opt["control.maxOmega"] = control["max_rotor_speed"]
     wt_opt["control.rated_TSR"] = control["optimal_tsr"]
     wt_opt["control.rated_pitch"] = control["min_pitch_limit"]
-    wt_opt["control.max_allowable_TS"] = control["max_allowable_blade_tip_speed"]
+    wt_opt["control.max_allowable_blade_tip_speed"] = control["max_allowable_blade_tip_speed"]
 
     if "ROSCO" in modeling_options:  # Will only be there if called by WEIS
         if modeling_options["ROSCO"]["ps_percent"] != control["peak_thrust_shaving"]:

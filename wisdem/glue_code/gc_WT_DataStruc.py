@@ -151,7 +151,7 @@ class WindTurbineOntologyOpenMDAO(om.Group):
             )
             ctrl_ivc.add_output("minOmega", val=0.0, units="rpm", desc="Minimum allowed rotor speed.")
             ctrl_ivc.add_output("maxOmega", val=0.0, units="rpm", desc="Maximum allowed rotor speed.")
-            ctrl_ivc.add_output("max_allowable_TS", val=0.0, units="m/s", desc="Maximum allowed blade tip speed.")
+            ctrl_ivc.add_output("max_allowable_blade_tip_speed", val=0.0, units="m/s", desc="Maximum allowed blade tip speed.")
             ctrl_ivc.add_output("rated_TSR", val=0.0, desc="Constant tip speed ratio in region II.")
             ctrl_ivc.add_output("rated_pitch", val=0.0, units="deg", desc="Constant pitch angle in region II.")
             if "ROSCO" not in modeling_options:  # If using WEIS, peak_thrust_shaving will be set there

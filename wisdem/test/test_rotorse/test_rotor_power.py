@@ -22,7 +22,7 @@ def fillprob(prob, n_pc, n_span):
     prob.set_val("rated_power", 5e6, units="W")
     prob.set_val("omega_min", 0.0, units="rpm")
     prob.set_val("omega_max", 100.0, units="rpm")
-    prob.set_val("max_allowable_TS", 90.0, units="m/s")
+    prob.set_val("max_allowable_blade_tip_speed", 90.0, units="m/s")
     prob.set_val("tsr_operational", 10.0)
     prob.set_val("control_pitch", 0.0, units="deg")
     prob.set_val("gearbox_efficiency", 0.975)
@@ -157,7 +157,7 @@ class TestServo(unittest.TestCase):
 
         # All reg 2: no maxTS, no max rpm, no power limit
         prob["omega_max"] = 1e3
-        prob["max_allowable_TS"] = 1e5
+        prob["max_allowable_blade_tip_speed"] = 1e5
         prob["rated_power"] = 1e16
         prob.run_model()
 
@@ -190,7 +190,7 @@ class TestServo(unittest.TestCase):
 
         # Test no maxTS, max rpm, no power limit
         prob["omega_max"] = 15.0
-        prob["max_allowable_TS"] = 1e5
+        prob["max_allowable_blade_tip_speed"] = 1e5
         prob["rated_power"] = 1e16
         prob.run_model()
         V_expect1 = np.sort(np.r_[V_expect0, prob["rated_V"]])
@@ -214,7 +214,7 @@ class TestServo(unittest.TestCase):
 
         # Test maxTS, no max rpm, no power limit
         prob["omega_max"] = 1e3
-        prob["max_allowable_TS"] = 105.0
+        prob["max_allowable_blade_tip_speed"] = 105.0
         prob["rated_power"] = 1e16
         prob.run_model()
         V_expect1 = np.sort(np.r_[V_expect0, prob["rated_V"]])
@@ -239,7 +239,7 @@ class TestServo(unittest.TestCase):
 
         # Test no maxTS, no max rpm, power limit, no peak shaving
         prob["omega_max"] = 1e3
-        prob["max_allowable_TS"] = 1e4
+        prob["max_allowable_blade_tip_speed"] = 1e4
         prob["rated_power"] = 5e6
         prob["peak_thrust_shaving"] = 1.0
         prob.run_model()
@@ -267,7 +267,7 @@ class TestServo(unittest.TestCase):
         # Test min & max rpm, no power limit
         prob["omega_min"] = 7.0
         prob["omega_max"] = 15.0
-        prob["max_allowable_TS"] = 1e5
+        prob["max_allowable_blade_tip_speed"] = 1e5
         prob["rated_power"] = 1e16
         prob.run_model()
         V_expect1 = np.sort(np.r_[V_expect0, prob["rated_V"]])
@@ -292,7 +292,7 @@ class TestServo(unittest.TestCase):
         # Test min & max rpm, normal power
         prob["omega_min"] = 7.0
         prob["omega_max"] = 14.0
-        prob["max_allowable_TS"] = 1e5
+        prob["max_allowable_blade_tip_speed"] = 1e5
         prob["rated_power"] = 5e6
         prob.run_model()
         V_expect1 = np.sort(np.r_[V_expect0, prob["rated_V"]])
@@ -316,7 +316,7 @@ class TestServo(unittest.TestCase):
         # Test fixed pitch
         prob["omega_min"] = 0.0
         prob["omega_max"] = 15.0
-        prob["max_allowable_TS"] = 1e5
+        prob["max_allowable_blade_tip_speed"] = 1e5
         prob["rated_power"] = 1e16
         prob["control_pitch"] = 5.0
         prob.run_model()
@@ -365,7 +365,7 @@ class TestServo(unittest.TestCase):
 
         # All reg 2: no maxTS, no max rpm, no power limit, no peak shaving
         prob["omega_max"] = 1e3
-        prob["max_allowable_TS"] = 1e5
+        prob["max_allowable_blade_tip_speed"] = 1e5
         prob["rated_power"] = 1e16
         prob["peak_thrust_shaving"] = 1.0
         prob.run_model()
@@ -399,7 +399,7 @@ class TestServo(unittest.TestCase):
 
         # Test no maxTS, no max rpm, power limit
         prob["omega_max"] = 1e3
-        prob["max_allowable_TS"] = 1e4
+        prob["max_allowable_blade_tip_speed"] = 1e4
         prob["rated_power"] = 5e6
         prob.run_model()
         V_expect1 = np.sort(np.r_[V_expect0, prob["rated_V"]])
@@ -447,7 +447,7 @@ class TestServo(unittest.TestCase):
 
         # All reg 2: no maxTS, no max rpm, no power limit
         prob["omega_max"] = 1e3
-        prob["max_allowable_TS"] = 1e5
+        prob["max_allowable_blade_tip_speed"] = 1e5
         prob["rated_power"] = 1e16
         prob["peak_thrust_shaving"] = 0.8
         prob.run_model()
@@ -481,7 +481,7 @@ class TestServo(unittest.TestCase):
 
         # Test no maxTS, max rpm, no power limit
         prob["omega_max"] = 15.0
-        prob["max_allowable_TS"] = 1e5
+        prob["max_allowable_blade_tip_speed"] = 1e5
         prob["rated_power"] = 1e16
         prob.run_model()
         V_expect1 = np.sort(np.r_[V_expect0, prob["rated_V"]])
@@ -505,7 +505,7 @@ class TestServo(unittest.TestCase):
 
         # Test maxTS, no max rpm, no power limit
         prob["omega_max"] = 1e3
-        prob["max_allowable_TS"] = 105.0
+        prob["max_allowable_blade_tip_speed"] = 105.0
         prob["rated_power"] = 1e16
         prob.run_model()
         V_expect1 = np.sort(np.r_[V_expect0, prob["rated_V"]])
@@ -530,7 +530,7 @@ class TestServo(unittest.TestCase):
 
         # Test no maxTS, no max rpm, power limit
         prob["omega_max"] = 1e3
-        prob["max_allowable_TS"] = 1e4
+        prob["max_allowable_blade_tip_speed"] = 1e4
         prob["rated_power"] = 5e6
         prob["peak_thrust_shaving"] = 1.0
         prob.run_model()
@@ -558,7 +558,7 @@ class TestServo(unittest.TestCase):
         # Test min & max rpm, no power limit
         prob["omega_min"] = 7.0
         prob["omega_max"] = 15.0
-        prob["max_allowable_TS"] = 1e5
+        prob["max_allowable_blade_tip_speed"] = 1e5
         prob["rated_power"] = 1e16
         prob.run_model()
         V_expect1 = np.sort(np.r_[V_expect0, prob["rated_V"]])
@@ -583,7 +583,7 @@ class TestServo(unittest.TestCase):
         # Test min & max rpm, normal power
         prob["omega_min"] = 7.0
         prob["omega_max"] = 14.0
-        prob["max_allowable_TS"] = 1e5
+        prob["max_allowable_blade_tip_speed"] = 1e5
         prob["rated_power"] = 5e6
         prob.run_model()
         V_expect1 = np.sort(np.r_[V_expect0, prob["rated_V"]])
