@@ -1230,7 +1230,7 @@ materials:
       unit_cost: 0.7
 control:
     min_rotor_speed: 0.
-    max_rotor_speed: 19.098593171027442
+    max_rotor_speed: 7.885576712533701
     optimal_tsr: 10.5
     min_pitch_table:
         wind_speed: [4.0, 25.0]
@@ -1239,4 +1239,4 @@ control:
     max_pitch_limit: 90.
     max_pitch_rate: 2.0
     peak_thrust_shaving: 0.8
-    maximum_allowable_TS: 85.0
+    max_allowable_blade_tip_speed: 85.0
