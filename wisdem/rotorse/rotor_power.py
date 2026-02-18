@@ -393,11 +393,15 @@ class ComputePowerCurve(ExplicitComponent):
         Omega_tsr = Uhub * tsr / Rtip_cone
 
         # Determine maximum rotor speed (rad/s)- either by TS or by control input
-        if inputs["max_allowable_blade_tip_speed"][0] > 0.0:
+        if inputs["max_allowable_blade_tip_speed"][0] > 0.0 and inputs["omega_max"][0] > 0.0:
             Omega_max = min([inputs["max_allowable_blade_tip_speed"][0] / Rtip_cone,
                          float(inputs["omega_max"][0]) * np.pi / 30.0])
-        else:
+        elif inputs["omega_max"][0] > 0.0:
             Omega_max = float(inputs["omega_max"][0]) * np.pi / 30.0
+        elif inputs["max_allowable_blade_tip_speed"][0] > 0.0:
+            Omega_max = inputs["max_allowable_blade_tip_speed"][0] / Rtip_cone
+        else:
+            Omega_max = np.inf
 
         # Apply maximum and minimum rotor speed limits
         Omega_min = float(inputs["omega_min"][0]) * np.pi / 30.0
