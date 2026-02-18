@@ -71,3 +71,12 @@ materials:
       m: 3
       A: 35534648443.719765
       unit_cost: 0.7
+control:
+    min_pitch_table:
+        wind_speed: [3.0, 25.0]
+        min_pitch: [0.0, 18.707072011021378]
+    min_rotor_speed: 6.899939740828794
+    max_rotor_speed: 14.520010641978924
+    optimal_tsr: 7.01754386
+    max_allowable_blade_tip_speed: 80.0
+    min_pitch_limit: 0.0

@@ -148,7 +148,7 @@ class WT_RNTA(om.Group):
             if modeling_options["flags"]["control"]:
                 self.connect("control.rated_pitch", "rotorse.pitch")
                 if "ROSCO" not in modeling_options:  # If using WEIS, connection will happen there
-                    self.connect("control.ps_percent", "rotorse.rp.powercurve.ps_percent")
+                    self.connect("control.peak_thrust_shaving", "rotorse.rp.powercurve.peak_thrust_shaving")
             self.connect("control.rated_TSR", "rotorse.tsr")
             self.connect("env.rho_air", "rotorse.rho_air")
             self.connect("env.mu_air", "rotorse.mu_air")
@@ -167,7 +167,7 @@ class WT_RNTA(om.Group):
             self.connect("configuration.rated_power", "rotorse.rp.rated_power")
             self.connect("control.minOmega", "rotorse.rp.omega_min")
             self.connect("control.maxOmega", "rotorse.rp.omega_max")
-            self.connect("control.max_TS", "rotorse.rp.control_maxTS")
+            self.connect("control.max_allowable_blade_tip_speed", "rotorse.rp.max_allowable_blade_tip_speed")
             self.connect("configuration.gearbox_type", "rotorse.rp.drivetrainType")
             self.connect("drivetrain.gearbox_efficiency", "rotorse.rp.powercurve.gearbox_efficiency")
             if modeling_options["flags"]["drivetrain"]:

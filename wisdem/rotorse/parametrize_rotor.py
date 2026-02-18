@@ -192,7 +192,6 @@ class ComputeReynolds(om.ExplicitComponent):
             desc="Diameter of the wind turbine rotor specified by the user, defined as 2 x (Rhub + blade length along z) * cos(precone).",
         )
         self.add_input("maxOmega", val=0.0, units="rad/s", desc="Maximum allowed rotor speed.")
-        self.add_input("max_TS", val=0.0, units="m/s", desc="Maximum allowed blade tip speed.")
         self.add_input("V_out", val=0.0, units="m/s", desc="Cut out wind speed. This is the wind speed where region III ends.")
 
         self.add_output("Re", val=np.zeros((n_span)), ref=1.0e6)
@@ -201,10 +200,8 @@ class ComputeReynolds(om.ExplicitComponent):
         # Note that we used to use ccblade outputs of local wind speed at the rated condition
         # This is more accurate, of course, but creates an implicit feedback loop in the code
         # This way gets an order-of-magnitude estimate for Reynolds number, which is really all that is needed
-        max_local_TS = inputs["max_TS"][0] / (inputs["rotor_diameter"][0] / 2.) * inputs["r_blade"][0]
-        if np.all(max_local_TS == 0.0):
-            max_local_TS = inputs["maxOmega"] * inputs["r_blade"]
 
+        max_local_TS = inputs["maxOmega"] * inputs["r_blade"]
         max_local_V = np.sqrt(inputs["V_out"]**2 + max_local_TS**2)
         outputs["Re"] = np.nan_to_num(
             inputs["rho"] * max_local_V * inputs["chord"] / inputs["mu"]
