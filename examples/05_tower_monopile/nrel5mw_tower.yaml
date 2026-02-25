@@ -10,7 +10,8 @@ assembly:
     hub_height: 90.
     rotor_diameter: 126.
     rated_power: 5.e+6
-
+    cut_in_wind_speed: 3.0
+    cut_out_wind_speed: 25.0
 components:
     tower:
         outer_shape:
