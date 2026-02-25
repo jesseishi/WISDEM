@@ -47,7 +47,8 @@ def yaml2openmdao(wt_opt, modeling_options, wt_init, opt_options):
 
     if modeling_options["flags"]["control"]:
         control = wt_init["control"]
-        wt_opt = assign_control_values(wt_opt, modeling_options, control)
+        assembly = wt_init["assembly"]
+        wt_opt = assign_control_values(wt_opt, modeling_options, control, assembly)
     else:
         control = {}
 
@@ -1427,10 +1428,10 @@ def assign_mooring_values(wt_opt, modeling_options, mooring):
     return wt_opt
 
 
-def assign_control_values(wt_opt, modeling_options, control):
+def assign_control_values(wt_opt, modeling_options, control, assembly):
     # Controller parameters
-    wt_opt["control.V_in"] = min(control["min_pitch_table"]["wind_speed"])
-    wt_opt["control.V_out"] = max(control["min_pitch_table"]["wind_speed"])
+    wt_opt["control.V_in"] = assembly["cut_in_wind_speed"]
+    wt_opt["control.V_out"] = assembly["cut_out_wind_speed"]
     wt_opt["control.minOmega"] = control["min_rotor_speed"]
     wt_opt["control.maxOmega"] = control["max_rotor_speed"]
     wt_opt["control.rated_TSR"] = control["optimal_tsr"]
