@@ -1,7 +1,7 @@
 # WISDEM&reg;
 
-[![Actions Status](https://github.com/WISDEM/WISDEM/workflows/CI_WISDEM/badge.svg?branch=develop)](https://github.com/WISDEM/WISDEM/actions)
-[![Coverage Status](https://coveralls.io/repos/github/WISDEM/WISDEM/badge.svg?branch=develop)](https://coveralls.io/github/WISDEM/WISDEM?branch=develop)
+[![Actions Status](https://github.com/NLRWindSystems/WISDEM/workflows/CI_WISDEM/badge.svg?branch=develop)](https://github.com/NLRWindSystems/WISDEM/actions)
+[![Coverage Status](https://coveralls.io/repos/github/NLRWindSystems/WISDEM/badge.svg?branch=develop)](https://coveralls.io/github/NLRWindSystems/WISDEM?branch=develop)
 [![Documentation Status](https://readthedocs.org/projects/wisdem/badge/?version=master)](https://wisdem.readthedocs.io/en/master/?badge=master)
 
 
@@ -108,7 +108,7 @@ Setup and activate the Anaconda environment from a prompt (Anaconda3 Power Shell
 2. Clone the repository and enter it:
 
     ```console
-    git clone https://github.com/WISDEM/WISDEM.git
+    git clone https://github.com/NLRWindSystems/WISDEM.git
     cd WISDEM
     ```
 
@@ -174,4 +174,4 @@ the examples or just run the examples. Otherwise, all tests will be run.
 
 ## Feedback
 
-For software issues please use <https://github.com/WISDEM/WISDEM/issues>.  For functionality and theory related questions and comments please use the NWTC forum for [Systems Engineering Software Questions](https://wind.nrel.gov/forum/wind/viewtopic.php?f=34&t=1002).
+For software issues please use <https://github.com/NLRWindSystems/WISDEM/issues>.  For functionality and theory related questions and comments please use the NWTC forum for [Systems Engineering Software Questions](https://wind.nrel.gov/forum/wind/viewtopic.php?f=34&t=1002).

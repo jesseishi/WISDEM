@@ -837,7 +837,7 @@ class TotalBladeProperties(ExplicitComponent):
 
         # Outputs - Overall beam properties
         self.add_output("blade_mass", val=0.0, units="kg", desc="mass of one blade")
-        self.add_output("blade_span_cg", val=0.0, units="m", desc="Distance along the blade span for its center of gravity")
+        self.add_output("blade_cg_hubcs", val=0.0, units="m", desc="Position of the blade center of gravity in the hub coordinate system.")
         self.add_output(
             "blade_moment_of_inertia", val=0.0, units="kg*m**2", desc="mass moment of inertia of blade about hub"
         )
@@ -854,11 +854,11 @@ class TotalBladeProperties(ExplicitComponent):
         try:
             # Numpy v1/2 clash
             blade_mass = np.trapezoid(rhoA_joint, inputs["r"])
-            blade_span_cg = np.trapezoid(rhoA_joint * inputs["r"], inputs["r"]) / blade_mass
+            blade_cg_hubcs = np.trapezoid(rhoA_joint * inputs["r"], inputs["r"]) / blade_mass
             blade_moment_of_inertia = np.trapezoid(rhoA_joint * inputs["r"] ** 2.0, inputs["r"])
         except AttributeError:
             blade_mass = np.trapz(rhoA_joint, inputs["r"])
-            blade_span_cg = np.trapz(rhoA_joint * inputs["r"], inputs["r"]) / blade_mass
+            blade_cg_hubcs = np.trapz(rhoA_joint * inputs["r"], inputs["r"]) / blade_mass
             blade_moment_of_inertia = np.trapz(rhoA_joint * inputs["r"] ** 2.0, inputs["r"])
         # tilt = inputs["uptilt"]
         n_blades = discrete_inputs["n_blades"]
@@ -873,7 +873,7 @@ class TotalBladeProperties(ExplicitComponent):
         I_all_blades = np.r_[Ixx, Iyy, Izz, Ixy, Ixz, Iyz]
 
         outputs["blade_mass"] = blade_mass
-        outputs["blade_span_cg"] = blade_span_cg
+        outputs["blade_cg_hubcs"] = blade_cg_hubcs
         outputs["blade_moment_of_inertia"] = blade_moment_of_inertia
         outputs["mass_all_blades"] = mass_all_blades
         outputs["I_all_blades"] = I_all_blades

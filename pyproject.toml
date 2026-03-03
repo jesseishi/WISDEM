@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wisdem"
-version = "4.0.5"
+version = "4.1.0"
 description = "Wind-Plant Integrated System Design & Engineering Model"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -56,7 +56,7 @@ dependencies = [
   "numpy",
   "openmdao",
   "openpyxl",
-  "orbit-nrel>=1.2.1",
+  "orbit-nrel>=1.2.5",
   "pandas",
   "pydoe3",
   "pyyaml",
@@ -64,6 +64,7 @@ dependencies = [
   "sortedcontainers",
   "statsmodels>=0.14.5",
   "windIO",
+  "wombat>=0.13.1"
 ]
 
 # List additional groups of dependencies here (e.g. development
@@ -85,6 +86,7 @@ docs = [
   "sphinx-jsonschema",
   "sphinx-copybutton",
   "numpydoc",
+  "docstring-parser",
 ]
 opt = ["pyoptsparse","nlopt"]
 
@@ -99,7 +101,7 @@ opt = ["pyoptsparse","nlopt"]
 # maintainers, and where to support the project financially. The key is
 # what's used to render the link text on PyPI.
 [project.urls]  # Optional
-"Homepage" = "https://github.com/WISDEM/WISDEM"
+"Homepage" = "https://github.com/NLRWindSystems/WISDEM"
 "Documentation" = "https://wisdem.readthedocs.io"
 "Project" = "https://www.nrel.gov/wind/systems-engineering.html"
 
