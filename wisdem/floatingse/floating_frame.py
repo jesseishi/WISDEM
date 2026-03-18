@@ -698,10 +698,7 @@ class FloatingFrame(om.Group):
             n_full = get_nfull(opt["floating"]["members"]["n_height"][k], nref=2)
             shape = opt["floating"]["members"]["outer_shape"][k]
             kname = opt['floating']['members']['name'][k]
-            if shape == "circular":
-                mem_prom = mem_prom_base + [("cd_usr", f"memload{k}.cd_usr"), ("ca_usr", f"memload{k}.ca_usr")]
-            elif shape == "rectangular":
-                mem_prom = mem_prom_base + [("cd_usr", f"memload{k}.cd_usr"), ("cdy_usr", f"memload{k}.cdy_usr"), ("ca_usr", f"memload{k}.ca_usr"), ("cay_usr", f"memload{k}.cay_usr")]
+
             self.add_subsystem(
                 f"memload{k}",
                 MemberLoads(
@@ -711,7 +708,7 @@ class FloatingFrame(om.Group):
                     memmax=True,
                     member_shape=shape,
                 ),
-                promotes=mem_prom + U_prom + [("joint1", f"member{k}_{kname}:joint1"), ("joint2", f"member{k}_{kname}:joint2")],
+                promotes= mem_prom_base + U_prom + [("joint1", f"member{k}_{kname}:joint1"), ("joint2", f"member{k}_{kname}:joint2")],
             )
 
         self.add_subsystem("loadsys", PlatformLoads(options=opt), promotes=["*"])
