@@ -1,8 +1,9 @@
 """
-Unit tests for AggregateJoints with relative joints in cylindrical coordinates.
+Unit tests for AggregateJoints with relative joints in rectangular/cylindrical coordinates.
 
 Tests that mooring anchor joints defined relative to column keel joints
 are resolved to the correct Cartesian (XYZ) positions.
+Test that a heave plate relative to a column keel is resolved correctly in the z dimension but not x/y.
 """
 
 import unittest
@@ -37,8 +38,8 @@ def make_floating_init_options(joint_names, cylindrical, relative, relative_dims
     }
 
 
-class TestRelativeJointsCylindrical(unittest.TestCase):
-    """Test AggregateJoints resolves relative cylindrical joints correctly."""
+class TestRelativeJoints(unittest.TestCase):
+    """Test AggregateJoints resolves relative joints correctly in both cylindrical and Cartesian coordinates."""
 
     @staticmethod
     def _run_aggregate_joints(floating_init_options, locations_input):
