@@ -13,7 +13,7 @@ dependencies:
   - jsonmerge
   - jsonschema
   - matplotlib
-  - moorpy>=1.2
+  - moorpy==1.2.1
   - ninja
   - nlopt
   - numpy
