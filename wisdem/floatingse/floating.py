@@ -146,3 +146,5 @@ class FloatingSE(om.Group):
 
             for var in ["z_global", "s_full", "s_all"]:
                 self.connect(f"member{k}_{kname}.{var}", f"memload{k}.{var}")
+                
+        self.set_input_defaults("rho_water", 1025.0, units="kg/m**3")
