@@ -1118,10 +1118,9 @@ components:
             generator_rpm_efficiency_user:
                 grid: [1.98, 2.8, 3.47, 3.98, 4.31, 4.49, 5.1, 5.66, 6.39, 7.16]
                 values: [0.7878, 0.9071, 0.941, 0.9526, 0.9566, 0.9582, 0.9614, 0.9622, 0.9608, 0.9541]
-            elastic_properties_mb:
-                system_mass: 508040.0
             length: 3.047
             radius: 4.89
+            mass: 508040.0
 airfoils:
    -  name: FFA-W3-211
       coordinates:
