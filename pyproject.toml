@@ -50,7 +50,7 @@ classifiers = [  # Optional
 dependencies = [
   "jsonmerge",
   "jsonschema",
-  "moorpy>=1.2",
+  "moorpy==1.2.1",
   "numpy",
   "openmdao",
   "openpyxl",
