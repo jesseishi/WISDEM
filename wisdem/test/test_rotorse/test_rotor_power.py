@@ -15,6 +15,8 @@ NPZFILE = np.load(ARCHIVE)
 def fillprob(prob, n_pc, n_span):
     prob.setup()
     for k in NPZFILE.files:
+        if k in ["generator_efficiency","lss_rpm"]:
+            continue
         prob[k] = NPZFILE[k]
 
     prob.set_val("v_min", 4.0, units="m/s")
