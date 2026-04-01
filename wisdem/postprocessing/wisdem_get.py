@@ -232,18 +232,21 @@ def get_nacelle_mass(prob):
     #              'MoI_cm_xx', 'MoI_cm_yy', 'MoI_cm_zz', 'MoI_cm_xy', 'MoI_cm_xz', 'MoI_cm_yz',
     #              'MoI_TT_xx', 'MoI_TT_yy', 'MoI_TT_zz', 'MoI_TT_xy', 'MoI_TT_xz', 'MoI_TT_yz']
     nacDF = prob.model.wt.wt_rna.drivese.nac._mass_table
-    hub_cm = prob["drivese.hub_system_cm"][0]
+    hub_cm_in = prob["drivese.hub_system_cm"][0]
     L_drive = prob["drivese.L_drive"][0]
     tilt = prob.get_val('drivetrain.uptilt', 'rad')[0]
     shaft0 = prob["drivese.shaft_start"]
-    Cup = -1.0
-    hub_cm = R = shaft0 + (L_drive + hub_cm) * np.array([Cup * np.cos(tilt), 0.0, np.sin(tilt)])
+    Cup = -1.0 
+    cm_array = np.array([Cup * np.cos(tilt), 0.0, np.sin(tilt)])   
+    hub_cm = R = shaft0 + (L_drive + hub_cm_in) * cm_array
     hub_mass = prob['drivese.hub_system_mass']
     hub_I = prob["drivese.hub_system_I"]
     hub_I_TT = util.rotateI(hub_I, -Cup * tilt, axis="y")
     hub_I_TT = util.unassembleI( util.assembleI(hub_I_TT) +
                                  hub_mass * (np.dot(R, R) * np.eye(3) - np.outer(R, R)) )
+    blades_cm_in = prob["drivese.blades_cm"][0]
     blades_mass = prob['drivese.blades_mass']
+    blades_cm = R = shaft0 + (L_drive + hub_cm_in + blades_cm_in) * cm_array
     blades_I = prob["drivese.blades_I"]
     blades_I_TT = util.rotateI(blades_I, -Cup * tilt, axis="y")
     blades_I_TT = util.unassembleI( util.assembleI(blades_I_TT) +
@@ -253,9 +256,10 @@ def get_nacelle_mass(prob):
     rna_I_TT = prob['drivese.rna_I_TT']
     rna_I = util.unassembleI( util.assembleI(rna_I_TT) +
                                     rna_mass * (np.dot(R, R) * np.eye(3) + np.outer(R, R)) )
-    nacDF.loc['Blades'] = np.r_[blades_mass, hub_cm, blades_I, blades_I_TT].tolist()
+    nacDF.loc['Blades'] = np.r_[blades_mass, blades_cm, blades_I, blades_I_TT].tolist()
     nacDF.loc['Hub_System'] = np.r_[hub_mass, hub_cm, hub_I, hub_I_TT].tolist()
     nacDF.loc['RNA'] = np.r_[rna_mass, rna_cm, rna_I, rna_I_TT].tolist()
+
     return nacDF
 
 

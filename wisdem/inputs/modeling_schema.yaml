@@ -500,21 +500,18 @@ properties:
                     n_ctv:
                         type: number
                         description: Number of crew transfer vessels (offshore) or onsite trucks (land-based) that should be made available to the wind farm.
-                        units: unitless
                         minimum: 1
                         maximum: 20
                         default: 3
                     n_hlv:
                         type: number
                         description: Number of heavy lift vessels (fixed-bottom offshore) or crawler cranes (land-based) that should be made available to the wind farm.
-                        units: unitless
                         minimum: 1
                         maximum: 10
                         default: 1
                     n_tugboat:
                         type: number
                         description: Number of tugboat groups that should be available to the port to tow floating turbines to port and back.
-                        units: unitless
                         minimum: 1
                         maximum: 10
                         default: 2
@@ -535,14 +532,12 @@ properties:
                     n_port_crews:
                         type: number
                         description: Number of port-side crews available to work on simultaneous repairs for any at-port turbine.
-                        units: unitless
                         minimum: 1
                         maximum: 100
                         default: 2
                     max_port_operations:
                         type: number
                         description: Number of turbines that can be at port at once.
-                        units: unitless
                         minimum: 1
                         maximum: 100
                         default: 2
@@ -556,27 +551,22 @@ properties:
                     maintenance_start:
                         type: string
                         description: Starting date, in MM/DD format; year will be inserted automatically based on input to `years`.
-                        units: unitless
                         default: "none"
                     non_operational_start:
                         type: string
                         description: Starting date, in MM/DD format, for an annual period where the site is inaccessible.
-                        units: string
                         default: "none"
                     non_operational_end:
                         type: string
                         description: Ending date, in MM/DD format, for an annual period where the site is inaccessible.
-                        units: unitless
                         default: "none"
                     reduced_speed_start:
                         type: string
                         description: Starting date, in MM/DD format, for an annual period where traveling speed is reduced.
-                        units: unitless
                         default: "none"
                     reduced_speed_end:
                         type: string
                         description: Ending date, in MM/DD format, for an annual period where traveling speed is reduced.
-                        units: unitless
                         default: "none"
                     reduced_speed:
                         type: number
@@ -588,7 +578,6 @@ properties:
                     random_seed:
                         type: number
                         description: Random seed for the internal random generator.
-                        units: "none"
                         minimum: 1
                         maximum: 4294967295
                         default: 42
