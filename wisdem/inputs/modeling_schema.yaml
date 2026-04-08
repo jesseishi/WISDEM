@@ -73,7 +73,7 @@ properties:
                         description: Min pitch angle of the Cp-Ct-Cq-surfaces
                     max_pitch_perf_surfaces:
                         type: number
-                        default: 30.
+                        default: 40.
                         description: Max pitch angle of the Cp-Ct-Cq-surfaces
                     n_tsr_perf_surfaces:
                         type: integer
