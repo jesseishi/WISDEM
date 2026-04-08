@@ -19,6 +19,7 @@ dependencies:
   - numpy
   - openmdao
   - openpyxl
+  - orbit-nrel>=1.2.5
   - pandas
   - pydoe3
   - pyoptsparse
@@ -27,8 +28,7 @@ dependencies:
   - sortedcontainers
   - statsmodels>=0.14.5
   - pip
+  - windIO
+  - wombat>=0.13.1
   - pip:
-    - orbit-nrel>=1.2.5
-    - wombat>=0.13.1
     - dearpygui
-    - windIO
