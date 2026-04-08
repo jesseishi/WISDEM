@@ -449,8 +449,8 @@ class PoseOptimization(object):
             wt_opt.model.add_design_var(
                 "blade.opt_var.twist_opt",
                 indices=indices_twist,
-                lower=init_twist_opt[indices_twist] - blade_opt["aero_shape"]["twist"]["max_decrease"],
-                upper=init_twist_opt[indices_twist] + blade_opt["aero_shape"]["twist"]["max_increase"],
+                lower=init_twist_opt[indices_twist] - np.deg2rad(blade_opt["aero_shape"]["twist"]["max_decrease"]),
+                upper=init_twist_opt[indices_twist] + np.deg2rad(blade_opt["aero_shape"]["twist"]["max_increase"]),
             )
 
         chord_options = blade_opt["aero_shape"]["chord"]
@@ -1376,7 +1376,7 @@ class PoseOptimization(object):
 
                     wt_opt["rotorse.rs.constr.max_strainU_te"] = blade_constr["strains_te_ss"]["max"]
                     wt_opt["rotorse.rs.constr.max_strainL_te"] = blade_constr["strains_te_ps"]["max"]
-                    wt_opt["rotorse.stall_check.stall_margin"] = blade_constr["stall"]["margin"] * 180.0 / np.pi
+                    wt_opt["rotorse.stall_check.stall_margin"] = blade_constr["stall"]["margin"]
                     if self.modeling["flags"]["tower"]:
                         wt_opt["tcons.max_allowable_td_ratio"] = blade_constr["tip_deflection"]["margin"]
 

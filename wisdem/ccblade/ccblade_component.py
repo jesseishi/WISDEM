@@ -538,7 +538,7 @@ class CCBladeTwist(ExplicitComponent):
 
             # Cap twist root region to 20 degrees
             for i in range(len(ccblade.theta)):
-                cap_twist_root = self.options["opt_options"]["design_variables"]["blade"]["aero_shape"]["twist"]["cap_twist_root"]
+                cap_twist_root = np.deg2rad(self.options["opt_options"]["design_variables"]["blade"]["aero_shape"]["twist"]["cap_twist_root"])
                 if ccblade.theta[-i - 1] > cap_twist_root:
                     ccblade.theta[0 : len(ccblade.theta) - i] = cap_twist_root
                     break
