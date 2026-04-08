@@ -256,7 +256,7 @@ def get_nacelle_mass(prob):
     rna_I_TT = prob['drivese.rna_I_TT']
     # Moving from TT-coord sys back to CoM, so subtract.
     rna_I = util.unassembleI( util.assembleI(rna_I_TT) -
-                              rna_mass * (np.dot(R, R) * np.eye(3) + np.outer(R, R)) )
+                              rna_mass * (np.dot(R, R) * np.eye(3) - np.outer(R, R)) )
     nacDF.loc['Blades'] = np.r_[blades_mass, blades_cm, blades_I, blades_I_TT].tolist()
     nacDF.loc['Hub_System'] = np.r_[hub_mass, hub_cm, hub_I, hub_I_TT].tolist()
     nacDF.loc['RNA'] = np.r_[rna_mass, rna_cm, rna_I, rna_I_TT].tolist()
