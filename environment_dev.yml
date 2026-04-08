@@ -10,7 +10,7 @@ dependencies:
   # - petsc4py  # [unix]
   # - mpi4py  # [unix] # only needed if local system has mpi built and is used
   - cython
-  - docstring-parser
+  - docstring_parser
   - jsonmerge
   - jsonschema
   - matplotlib
