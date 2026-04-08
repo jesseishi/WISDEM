@@ -46,7 +46,7 @@ jobs:
       - name: Add dependencies windows specific
         if: contains( matrix.os, 'windows')
         run: |
-          conda install -y m2w64-toolchain libpython
+          conda install -y gfortran gcc
 
       - name: Debug config
         run: |
