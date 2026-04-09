@@ -1384,10 +1384,10 @@ class PoseOptimization(object):
             drive_constr = self.opt["constraints"]["drivetrain"]
 
             wt_opt["drivese.shaft_deflection_allowable"] = drive_constr["shaft_deflection"]["upper_bound"]
-            wt_opt["drivese.shaft_angle_allowable"] = drive_constr["shaft_angle"]["upper_bound"]
+            wt_opt["drivese.shaft_angle_allowable"] = np.deg2rad(drive_constr["shaft_angle"]["upper_bound"])
 
             wt_opt["drivese.stator_deflection_allowable"] = drive_constr["stator_deflection"]["upper_bound"]
-            wt_opt["drivese.stator_angle_allowable"] = drive_constr["stator_angle"]["upper_bound"]
+            wt_opt["drivese.stator_angle_allowable"] = np.deg2rad(drive_constr["stator_angle"]["upper_bound"])
 
             if self.modeling["WISDEM"]["DriveSE"]["direct"]:
                 wt_opt["drivese.access_diameter"] = drive_constr["access"]["lower_bound"]

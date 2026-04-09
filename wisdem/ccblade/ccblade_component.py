@@ -498,7 +498,7 @@ class CCBladeTwist(ExplicitComponent):
             cd = np.zeros(self.n_span)
             alpha = np.zeros(self.n_span)
             Emax = np.zeros(self.n_span)
-            margin2stall = self.options["opt_options"]["constraints"]["blade"]["stall"]["margin"] * 180.0 / np.pi
+            margin2stall = self.options["opt_options"]["constraints"]["blade"]["stall"]["margin"]
             Re = np.array(Omega * inputs["r"] * inputs["chord"] * inputs["rho"][0] / inputs["mu"][0])
             aoa_op = inputs["aoa_op"]
             for i in range(self.n_span):
