@@ -498,7 +498,7 @@ class CCBladeTwist(ExplicitComponent):
             cd = np.zeros(self.n_span)
             alpha = np.zeros(self.n_span)
             Emax = np.zeros(self.n_span)
-            margin2stall = self.options["opt_options"]["constraints"]["blade"]["stall"]["margin"] * 180.0 / np.pi
+            margin2stall = self.options["opt_options"]["constraints"]["blade"]["stall"]["margin"]
             Re = np.array(Omega * inputs["r"] * inputs["chord"] * inputs["rho"][0] / inputs["mu"][0])
             aoa_op = inputs["aoa_op"]
             for i in range(self.n_span):
@@ -538,7 +538,7 @@ class CCBladeTwist(ExplicitComponent):
 
             # Cap twist root region to 20 degrees
             for i in range(len(ccblade.theta)):
-                cap_twist_root = self.options["opt_options"]["design_variables"]["blade"]["aero_shape"]["twist"]["cap_twist_root"]
+                cap_twist_root = np.deg2rad(self.options["opt_options"]["design_variables"]["blade"]["aero_shape"]["twist"]["cap_twist_root"])
                 if ccblade.theta[-i - 1] > cap_twist_root:
                     ccblade.theta[0 : len(ccblade.theta) - i] = cap_twist_root
                     break

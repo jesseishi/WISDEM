@@ -866,6 +866,8 @@ class WindTurbineOntologyPython(object):
             if not self.modeling_options["user_elastic"]["blade"]:
                 # Webs positions TBD
                 # Structural layers
+                anchors = self.wt_init["components"]["blade"]["structure"]["anchors"]
+                n_anchors = len(anchors)
                 for i in range(self.modeling_options["WISDEM"]["RotorSE"]["n_layers"]):
                     self.wt_init["components"]["blade"]["structure"]["layers"][i]["thickness"]["grid"] = wt_opt[
                         "blade.outer_shape.s"
@@ -873,6 +875,60 @@ class WindTurbineOntologyPython(object):
                     self.wt_init["components"]["blade"]["structure"]["layers"][i]["thickness"]["values"] = wt_opt[
                         "blade.ps.layer_thickness_param"
                     ][i, :].tolist()
+                    # Update start_nd_arc for the anchor
+                    if "anchor" in self.wt_init["components"]["blade"]["structure"]["layers"][i]["start_nd_arc"]:
+                        anchor_name = self.wt_init["components"]["blade"]["structure"]["layers"][i]["start_nd_arc"]["anchor"]["name"]
+                        anchor_handle = self.wt_init["components"]["blade"]["structure"]["layers"][i]["start_nd_arc"]["anchor"]["handle"]
+                        for j in range(n_anchors):
+                            if anchors[j]["name"] == anchor_name:
+                                self.wt_init["components"]["blade"]["structure"]["anchors"][j][anchor_handle]["grid"] = wt_opt[
+                                    "blade.outer_shape.s"
+                                ].tolist()
+                                self.wt_init["components"]["blade"]["structure"]["anchors"][j][anchor_handle]["values"] = wt_opt[
+                                    "blade.structure.layer_start_nd"
+                                ][i, :].tolist()
+                                break
+                    # Update end_nd_arc for the anchor
+                    if "anchor" in self.wt_init["components"]["blade"]["structure"]["layers"][i]["end_nd_arc"]:
+                        anchor_name = self.wt_init["components"]["blade"]["structure"]["layers"][i]["end_nd_arc"]["anchor"]["name"]
+                        anchor_handle = self.wt_init["components"]["blade"]["structure"]["layers"][i]["end_nd_arc"]["anchor"]["handle"]
+                        for j in range(n_anchors):
+                            if anchors[j]["name"] == anchor_name:
+                                self.wt_init["components"]["blade"]["structure"]["anchors"][j][anchor_handle]["grid"] = wt_opt[
+                                    "blade.outer_shape.s"
+                                ].tolist()
+                                self.wt_init["components"]["blade"]["structure"]["anchors"][j][anchor_handle]["values"] = wt_opt[
+                                    "blade.structure.layer_end_nd"
+                                ][i, :].tolist()
+                                break
+                for i in range(self.modeling_options["WISDEM"]["RotorSE"]["n_webs"]):
+                    # Update start_nd_arc for the anchor
+                    if "anchor" in self.wt_init["components"]["blade"]["structure"]["webs"][i]["start_nd_arc"]:
+                        anchor_name = self.wt_init["components"]["blade"]["structure"]["webs"][i]["start_nd_arc"]["anchor"]["name"]
+                        anchor_handle = self.wt_init["components"]["blade"]["structure"]["webs"][i]["start_nd_arc"]["anchor"]["handle"]
+                        for j in range(n_anchors):
+                            if anchors[j]["name"] == anchor_name:
+                                self.wt_init["components"]["blade"]["structure"]["anchors"][j][anchor_handle]["grid"] = wt_opt[
+                                    "blade.outer_shape.s"
+                                ].tolist()
+                                self.wt_init["components"]["blade"]["structure"]["anchors"][j][anchor_handle]["values"] = wt_opt[
+                                    "blade.structure.web_start_nd"
+                                ][i, :].tolist()
+                                break
+                    # Update end_nd_arc for the anchor
+                    if "anchor" in self.wt_init["components"]["blade"]["structure"]["webs"][i]["end_nd_arc"]:
+                        anchor_name = self.wt_init["components"]["blade"]["structure"]["webs"][i]["end_nd_arc"]["anchor"]["name"]
+                        anchor_handle = self.wt_init["components"]["blade"]["structure"]["webs"][i]["end_nd_arc"]["anchor"]["handle"]
+                        for j in range(n_anchors):
+                            if anchors[j]["name"] == anchor_name:
+                                self.wt_init["components"]["blade"]["structure"]["anchors"][j][anchor_handle]["grid"] = wt_opt[
+                                    "blade.outer_shape.s"
+                                ].tolist()
+                                self.wt_init["components"]["blade"]["structure"]["anchors"][j][anchor_handle]["values"] = wt_opt[
+                                    "blade.structure.web_end_nd"
+                                ][i, :].tolist()
+                                break
+
 
             if "elastic_properties" not in self.wt_init["components"]["blade"]["structure"]:
                 self.wt_init["components"]["blade"]["structure"]["elastic_properties"] = {}

@@ -58,7 +58,7 @@ properties:
                             twist:
                                 type: object
                                 default: {}
-                                description: Blade twist as a design variable by adding or subtracting radians from the initial value at spline control points along the span.
+                                description: Blade twist as a design variable by adding or subtracting degrees from the initial value at spline control points along the span.
                                 properties:
                                     flag: *flag
                                     inverse:
@@ -78,13 +78,13 @@ properties:
                                     max_decrease:
                                         type: number
                                         description: Maximum allowable decrease of twist at each DV location along blade span.
-                                        default: 0.1
-                                        unit: rad
+                                        default: 5.0
+                                        unit: deg
                                     max_increase:
                                         type: number
                                         description: Maximum allowable increase of twist at each DV location along blade span.
-                                        default: 0.1
-                                        unit: rad
+                                        default: 5.0
+                                        unit: deg
                                     index_start: &index_start
                                         type: integer
                                         default: 0
@@ -100,8 +100,8 @@ properties:
                                     cap_twist_root:
                                         type: number
                                         description: Maximum allowable twist during an inverse design. Close to blade root, twist will be capped to this value.
-                                        default: 0.349
-                                        unit: rad
+                                        default: 20.0
+                                        unit: deg
                             chord:
                                 type: object
                                 default: {}
@@ -194,9 +194,9 @@ properties:
                             lower_bound: &angbound
                                 type: number
                                 minimum: 0.0
-                                maximum: 0.5235987756 # 30 deg
+                                maximum: 30.0
                                 default: 0.0
-                                unit: rad
+                                unit: deg
                                 description: Design variable bound
                             upper_bound: *angbound
                     hub_diameter:
@@ -733,18 +733,18 @@ properties:
                                                             properties:
                                                                 lower_bound:
                                                                     type: number
-                                                                    unit: rad
+                                                                    unit: deg
                                                                     description: Design variable bound
                                                                     default: 0.0
                                                                     minimum: 0.0
-                                                                    maximum: 3.141592653589793 #180 deg
+                                                                    maximum: 180.0 #180 deg
                                                                 upper_bound:
                                                                     type: number
-                                                                    unit: rad
+                                                                    unit: deg
                                                                     description: Design variable bound
-                                                                    default: 0.1
+                                                                    default: 5.0
                                                                     minimum: 0.0
-                                                                    maximum: 3.141592653589793 #180 deg
+                                                                    maximum: 180.0 #180 deg
             mooring:
                 type: object
                 description: Design variables associated with the mooring system
@@ -931,10 +931,10 @@ properties:
                             flag: *flag
                             margin:
                                 type: number
-                                default: 0.05233 # 3 deg
+                                default: 5.0 # 5 deg
                                 minimum: 0.0
-                                maximum: 0.5
-                                unit: radians
+                                maximum: 30.0
+                                unit: deg
                     chord:
                         type: object
                         description: Enforcing the maximum chord length limit at all points along blade span.
@@ -1288,8 +1288,8 @@ properties:
                                 type: number
                                 default: 1e-3
                                 minimum: 1e-5
-                                maximum: 1.0
-                                unit: radian
+                                maximum: 30.0
+                                unit: deg
                                 description: Upper limit of angular deflection
                     stator_deflection:
                         type: object
@@ -1301,7 +1301,7 @@ properties:
                     stator_angle:
                         type: object
                         default: {}
-                        description: Allowable non-torque angular deflection of the nose or bedplate, in radians, at the generator stator attachment
+                        description: Allowable non-torque angular deflection of the nose or bedplate, in degrees, at the generator stator attachment
                         properties:
                             flag: *flag
                             upper_bound: *angular_upper
@@ -1322,10 +1322,10 @@ properties:
                         properties:
                             upper_bound: &upang
                                 type: number
-                                default: 0.17453292519943295 # 10 deg
-                                minimum: 0.017453292519943295 # 1 deg
-                                maximum: 0.7853981633974483 # 45 deg
-                                unit: rad
+                                default: 10.0 
+                                minimum: 1.0 
+                                maximum: 45.0 
+                                unit: deg
                     survival_heel: *heelang
                     max_surge:
                         type: object
