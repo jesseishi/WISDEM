@@ -4,8 +4,8 @@ channels:
 
 dependencies:
 # NOTE: uncomment the OS-dependent lines below as needed
-  # - m2w64-toolchain  # [win]
-  # - libpython  # [win]
+  # - gfortran  # [win]
+  # - gcc       # [win]
   # - gfortran  # [osx]  # only if not installed via homebrew or macports
   # - petsc4py  # [unix]
   # - mpi4py  # [unix] # only needed if local system has mpi built and is used
