@@ -13,8 +13,8 @@ design_variables:
               flag: True 
               inverse: False
               n_opt: 8
-              max_decrease: 0.08722222222222223
-              max_increase: 0.08722222222222223
+              max_decrease: 5.0
+              max_increase: 5.0
               index_start: 2
               index_end: 8
           chord:
@@ -82,7 +82,7 @@ constraints:
   blade:
     stall:
       flag: True
-      margin: 0.05233
+      margin: 5.0
     chord:
       flag: True 
       max: 4.3

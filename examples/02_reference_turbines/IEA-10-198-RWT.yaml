@@ -455,7 +455,7 @@ components:
                   start_nd_arc:
                       anchor:
                           name: DP02_DP00_triax
-                          handle: DP02_DP00_uniax
+                          handle: start_nd_arc
                   end_nd_arc:
                       anchor:
                           name: TE

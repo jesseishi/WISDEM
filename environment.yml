@@ -4,8 +4,8 @@ channels:
 
 dependencies:
 # NOTE: uncomment the OS-dependent lines below as needed
-  # - m2w64-toolchain  # [win]
-  # - libpython  # [win]
+  # - gfortran  # [win]
+  # - gcc       # [win]
   # - gfortran  # [osx]  # only if not installed via homebrew or macports
   - petsc4py  # [unix]
   - mpi4py  # [unix] # only needed if local system has mpi built and is used
@@ -14,11 +14,12 @@ dependencies:
   - jsonmerge
   - jsonschema
   - matplotlib
-  - moorpy>=1.2
+  - moorpy==1.2.1
   - nlopt
   - numpy
   - openmdao
   - openpyxl
+  - orbit-nrel>=1.2.5
   - pandas
   - pydoe3
   - pyoptsparse
@@ -27,8 +28,7 @@ dependencies:
   - sortedcontainers
   - statsmodels>=0.14.5
   - pip
+  - windIO>=2.1.1
+  - wombat>=0.13.1
   - pip:
-    - orbit-nrel>=1.2.5
-    - wombat>=0.13.1
     - dearpygui
-    - windIO

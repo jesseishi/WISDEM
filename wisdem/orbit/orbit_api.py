@@ -805,4 +805,7 @@ class OrbitWisdem(om.ExplicitComponent):
         outputs["installation_time"] = project.installation_time
         outputs["installation_capex"] = project.installation_capex
         outputs["capacity"] = project.capacity
-        discrete_outputs["layout"] = project.phases["ArraySystemDesign"].create_layout_df()
+        if "ArraySystemDesign" in project.phases:
+            discrete_outputs["layout"] = project.phases["ArraySystemDesign"].create_layout_df()
+        elif "CustomArraySystemDesign" in project.phases:
+            discrete_outputs["layout"] = project.phases["CustomArraySystemDesign"].create_layout_df()
