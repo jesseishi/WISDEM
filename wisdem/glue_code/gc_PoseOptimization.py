@@ -449,8 +449,8 @@ class PoseOptimization(object):
             wt_opt.model.add_design_var(
                 "blade.opt_var.twist_opt",
                 indices=indices_twist,
-                lower=init_twist_opt[indices_twist] - np.deg2rad(blade_opt["aero_shape"]["twist"]["max_decrease"]),
-                upper=init_twist_opt[indices_twist] + np.deg2rad(blade_opt["aero_shape"]["twist"]["max_increase"]),
+                lower=np.deg2rad(init_twist_opt[indices_twist] - blade_opt["aero_shape"]["twist"]["max_decrease"]),
+                upper=np.deg2rad(init_twist_opt[indices_twist] + blade_opt["aero_shape"]["twist"]["max_increase"]),
             )
 
         chord_options = blade_opt["aero_shape"]["chord"]
