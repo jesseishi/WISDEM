@@ -407,6 +407,7 @@ class NSGA2Driver(Driver):
             "constrs_fronts": rv[3],
         }
         # create a yaml file at the path
+        os.makedirs(nsga2_output_dir, exist_ok=True)
         write_yaml(nsga2_debug_collection, nsga2_output_dir / "nsga2_debug.yaml")
 
         # iterate over the specified generations
