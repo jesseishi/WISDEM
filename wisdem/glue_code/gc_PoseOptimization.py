@@ -190,7 +190,6 @@ class PoseOptimization(object):
                     "eta_c",
                     "Pm",
                     "eta_m",
-                    "compute_pareto",
                 ]
                 wt_opt = self._set_optimizer_properties(wt_opt, options_keys)
 
