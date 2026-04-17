@@ -355,6 +355,12 @@ class NSGA2Driver(Driver):
         if pop_size == 0:
             pop_size = 10 * count  # 10 per DV DOF
 
+        if pop_size % 2 != 0:
+            raise ValueError(
+                f"NSGA2 requires an even population size, but pop_size={pop_size}. "
+                "Please set pop_size to an even number."
+            )
+
         # generate initial population using Latin Hypercube Sampling
         design_vars_init = lower_bound + (upper_bound - lower_bound) * lhs(
             count,
