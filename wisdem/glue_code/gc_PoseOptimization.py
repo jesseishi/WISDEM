@@ -681,7 +681,7 @@ class PoseOptimization(object):
         # -- Hub & Drivetrain --
         if hub_opt["cone"]["flag"]:
             wt_opt.model.add_design_var(
-                "hub.cone", lower=hub_opt["cone"]["lower_bound"], upper=hub_opt["cone"]["upper_bound"], ref=1e-2
+                "hub.cone", lower=hub_opt["cone"]["lower_bound"], upper=hub_opt["cone"]["upper_bound"], ref=hub_opt["cone"]["upper_bound"]
             )
         if hub_opt["hub_diameter"]["flag"]:
             wt_opt.model.add_design_var(
@@ -694,7 +694,7 @@ class PoseOptimization(object):
                 "nacelle.uptilt",
                 lower=drive_opt["uptilt"]["lower_bound"],
                 upper=drive_opt["uptilt"]["upper_bound"],
-                ref=1e-2,
+                ref=drive_opt["uptilt"]["upper_bound"],
             )
 
         if drive_opt["generator_length"]["flag"]:
